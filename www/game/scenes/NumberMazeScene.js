@@ -123,7 +123,7 @@ class NumberMazeScene {
             }, 500);
         } else if (this.isTutorial && !this.tutorialShown) {
             this.tutorialShown = true;
-            const hint = puzzle.hint || 'Conecta los números en orden trazando una línea.';
+            const hint = (puzzle && puzzle.hint) || 'Conecta los números en orden trazando una línea.';
             setTimeout(() => {
                 narratorSystem.say([{ speaker: 'guia', text: hint }]);
             }, 500);

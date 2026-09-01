@@ -111,7 +111,7 @@ class StoryScene {
 
         ctx.clip();
 
-        const img = game.assets.guide;
+        const img = this.game.assets.guide;
         if (img && img.complete) {
             const sx = img.width * 0.25;
             const sy = img.height * 0.20;
@@ -126,5 +126,7 @@ class StoryScene {
         // Handled by narrator
     }
 
-    exit() {}
+    exit() {
+        narratorSystem.clear();
+    }
 }

@@ -40,7 +40,9 @@ const LEVELS = (function generateLevels() {
         if (pattern === 1 || pattern === 6) {
             sceneType = 'StoryScene';
             title = `Reflexión - Acto ${act}`;
-            config = { dialogueKey: `act${act}_reflection_${i}` };
+            // Map to available dialogue keys (afterLevel1-5, cycling)
+            const dialogueIndex = ((i - 1) % 5) + 1;
+            config = { dialogueKey: `reflections.afterLevel${dialogueIndex}` };
         } else if (pattern === 0) {
             sceneType = 'BreathingScene';
             title = 'Pausa Consciente';
@@ -90,7 +92,7 @@ const LEVELS = (function generateLevels() {
 
     // Agregar un nivel final de recapitulación
     levels.push({
-        id: 'level_101_end',
+        id: 'level_501_end',
         scene: 'RecapScene',
         act: 3,
         title: 'Recapitulación Final',

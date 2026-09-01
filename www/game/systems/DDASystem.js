@@ -70,7 +70,13 @@ class DDASystem {
     // --- Get adjusted parameters ---
     getAdjustedParams(baseParams) {
         const skill = this.playerProfile.skillLevel;
-        const modeMultiplier = LEVELS.modes[this.mode]?.ddaMultiplier || 1.0;
+        const modesConfig = {
+            story: { ddaMultiplier: 1.0, narratorHelp: 'full' },
+            challenge: { ddaMultiplier: 1.3, narratorHelp: 'minimal' },
+            reflection: { ddaMultiplier: 0.7, narratorHelp: 'full' },
+        };
+        const modeConfig = modesConfig[this.mode] || modesConfig.story;
+        const modeMultiplier = modeConfig.ddaMultiplier;
         const adjusted = { ...baseParams };
 
         // Time limit: more time for struggling players, less for skilled
@@ -120,7 +126,7 @@ class DDASystem {
         adjusted.distractorCount = Math.max(2, Math.min(5, 2 + Math.round(skill * 3)));
 
         // Narrator help level
-        adjusted.narratorHelp = LEVELS.modes[this.mode]?.narratorHelp || 'full';
+        adjusted.narratorHelp = modeConfig.narratorHelp;
 
         return adjusted;
     }

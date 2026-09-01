@@ -169,7 +169,6 @@ class ObjectSearchScene {
                 ctx.globalAlpha = 0.3 + Math.sin(s.phase) * 0.3;
                 ctx.fillStyle = '#ffd54f';
                 ctx.beginPath();
-                // Star shape
                 const cx = s.x;
                 const cy = s.y;
                 const size = s.size;
@@ -178,7 +177,7 @@ class ObjectSearchScene {
                     ctx.moveTo(cx, cy);
                     ctx.lineTo(cx + Math.cos(angle) * size, cy + Math.sin(angle) * size);
                 }
-                ctx.stroke();
+                ctx.fill();
                 ctx.restore();
             }
         });
@@ -329,8 +328,8 @@ class ObjectSearchScene {
             }
             if (x >= use.x && x <= use.x + use.w && y >= use.y && y <= use.y + use.h) {
                 audioManager.playCollect();
-                this.score += this.pendingItem.points || 20;
                 if (this.pendingItem.isKey) {
+                    this.score += this.pendingItem.points || 20;
                     vaultSystem.useImmediately(this.pendingItem);
                     narratorSystem.sayVault('itemUsedImmediate');
                 } else {

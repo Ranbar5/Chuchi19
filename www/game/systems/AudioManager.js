@@ -50,11 +50,13 @@ class AudioManager {
     }
 
     playWrong() {
+        if (!this.ctx) return;
         this._createOscillator(200, 'sawtooth', 0.3, 0.3);
         setTimeout(() => this._createOscillator(180, 'sawtooth', 0.3, 0.2), 150);
     }
 
     playClick() {
+        if (!this.ctx) return;
         this._createOscillator(800, 'sine', 0.05, 0.3);
     }
 
@@ -153,6 +155,7 @@ class AudioManager {
         source.connect(gain);
         gain.connect(this.ctx.destination);
         source.start();
+        source.stop(this.ctx.currentTime + 0.5);
     }
 
     playTap() {

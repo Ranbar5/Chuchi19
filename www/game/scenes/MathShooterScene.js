@@ -117,10 +117,13 @@ class MathShooterScene {
         // Create targets
         this.targets = [];
         const answers = [ans];
+        let attempts = 0;
         for (let i = 0; i < numDistractors; i++) {
             let fake;
             do {
                 fake = ans + Math.floor(Math.random() * 10) - 5;
+                attempts++;
+                if (attempts > 50) { fake = ans + i + 1; break; }
             } while (fake === ans || fake < 0 || answers.includes(fake));
             answers.push(fake);
         }
@@ -239,7 +242,7 @@ class MathShooterScene {
             ctx.textBaseline = 'middle';
             ctx.shadowColor = '#00e5ff';
             ctx.shadowBlur = 10;
-            ctx.fillText(`${this.currentProblem.question} = ?`, w / 2, boxY + boxH / 2);
+            ctx.fillText(`${this.currentProblem.text} = ?`, w / 2, boxY + boxH / 2);
             ctx.shadowBlur = 0;
 
             // Round counter
@@ -519,6 +522,7 @@ class MathShooterScene {
     }
 
     exit() {
+        narratorSystem.clear();
         audioManager.stopMusic();
     }
 }

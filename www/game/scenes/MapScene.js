@@ -35,28 +35,9 @@ class MapScene {
             this.targetScroll = -this.nodes[current].y + this.game.height / 2;
             this.scrollOffset = this.targetScroll;
         }
-
-        // Add event listeners for scroll and click
-        this.onDown = this._onDown.bind(this);
-        this.onMove = this._onMove.bind(this);
-        this.onUp = this._onUp.bind(this);
-
-        this.game.canvas.addEventListener('mousedown', this.onDown);
-        this.game.canvas.addEventListener('mousemove', this.onMove);
-        this.game.canvas.addEventListener('mouseup', this.onUp);
-        this.game.canvas.addEventListener('touchstart', this.onDown);
-        this.game.canvas.addEventListener('touchmove', this.onMove);
-        this.game.canvas.addEventListener('touchend', this.onUp);
     }
 
-    exit() {
-        this.game.canvas.removeEventListener('mousedown', this.onDown);
-        this.game.canvas.removeEventListener('mousemove', this.onMove);
-        this.game.canvas.removeEventListener('mouseup', this.onUp);
-        this.game.canvas.removeEventListener('touchstart', this.onDown);
-        this.game.canvas.removeEventListener('touchmove', this.onMove);
-        this.game.canvas.removeEventListener('touchend', this.onUp);
-    }
+    exit() {}
 
     _onDown(e) {
         this.isDragging = true;
@@ -99,7 +80,39 @@ class MapScene {
         }
     }
 
+    handleInput(type, x, y) {
+        if (type === 'mousedown' || type === 'touchstart') {
+            this.isDragging = true;
+            this.lastY = y;
+        } else if ((type === 'mousemove' || type === 'touchmove') && this.isDragging) {
+            const dy = y - this.lastY;
+            this.targetScroll += dy;
+            this.lastY = y;
+        } else if (type === 'mouseup' || type === 'touchend') {
+            if (!this.isDragging) return;
+            this.isDragging = false;
+
+            const worldY = y - this.scrollOffset;
+            for (const node of this.nodes) {
+                const dx = node.x - x;
+                const dy = node.y - worldY;
+                if (dx * dx + dy * dy < 40 * 40 && node.unlocked) {
+                    audioManager.playClick();
+                    this.game.currentLevel = node.id;
+                    this.game.loadLevel(node.id);
+                    break;
+                }
+            }
+        }
+    }
+
     update(dt) {
+        // Clamp scroll bounds
+        if (this.nodes.length > 0) {
+            const minY = -this.nodes[this.nodes.length - 1].y + this.game.height / 2;
+            const maxY = -this.nodes[0].y + this.game.height / 2;
+            this.targetScroll = Math.max(minY, Math.min(maxY, this.targetScroll));
+        }
         this.scrollOffset += (this.targetScroll - this.scrollOffset) * 10 * dt;
     }
 

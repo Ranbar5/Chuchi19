@@ -107,14 +107,29 @@ class VaultSystem {
             slot.className = 'vault-slot' + (item ? ' filled' : '');
 
             if (item) {
-                slot.innerHTML = `
-                    <span class="item-icon">${item.icon}</span>
-                    <span class="item-name">${item.name}</span>
-                    ${item.used ? '<span class="item-used">✓ Usado</span>' : ''}
-                `;
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'item-icon';
+                iconSpan.textContent = item.icon;
+                slot.appendChild(iconSpan);
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'item-name';
+                nameSpan.textContent = item.name;
+                slot.appendChild(nameSpan);
+
+                if (item.used) {
+                    const usedSpan = document.createElement('span');
+                    usedSpan.className = 'item-used';
+                    usedSpan.textContent = '✓ Usado';
+                    slot.appendChild(usedSpan);
+                }
                 slot.title = item.futureUse;
             } else {
-                slot.innerHTML = '<span class="item-icon" style="opacity:0.2">?</span>';
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'item-icon';
+                iconSpan.textContent = '?';
+                iconSpan.style.opacity = '0.2';
+                slot.appendChild(iconSpan);
             }
             grid.appendChild(slot);
         }

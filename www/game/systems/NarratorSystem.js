@@ -34,14 +34,16 @@ class NarratorSystem {
 
     // --- Show contextual frustration message ---
     sayFrustration(level = 'mild') {
-        const messages = DIALOGUES.frustration[level] || DIALOGUES.frustration.mild;
-        const msg = messages[Math.floor(Math.random() * messages.length)];
+        const messages = (DIALOGUES && DIALOGUES.frustration && DIALOGUES.frustration[level]) || '¡No te preocupes! Los errores son parte del aprendizaje. 💪';
+        const msg = Array.isArray(messages)
+            ? messages[Math.floor(Math.random() * messages.length)]
+            : messages;
         this.say([{ speaker: 'guia', text: msg }]);
     }
 
     // --- Show vault message ---
     sayVault(type) {
-        const msg = DIALOGUES.vault[type];
+        const msg = DIALOGUES?.vault?.[type];
         if (msg) {
             this.say([{ speaker: 'guia', text: msg }]);
         }
@@ -49,7 +51,7 @@ class NarratorSystem {
 
     // --- Show success message ---
     saySuccess(rating) {
-        const messages = DIALOGUES.success[rating] || DIALOGUES.success.okay;
+        const messages = (DIALOGUES && DIALOGUES.success && DIALOGUES.success[rating]) || DIALOGUES.success.okay;
         const msg = messages[Math.floor(Math.random() * messages.length)];
         this.say([{ speaker: 'guia', text: msg }]);
     }

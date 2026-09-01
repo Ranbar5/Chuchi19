@@ -152,7 +152,7 @@ class IntroScene {
         ctx.clip(); // clip to circle
         
         // Draw image
-        const img = game.assets.characters;
+        const img = this.game.assets.characters;
         if (img && img.complete) {
             // Source crop for Felipe in characters.jpg: left side
             const sx = img.width * 0.18;
@@ -187,7 +187,7 @@ class IntroScene {
         ctx.clip();
 
         // Draw image
-        const img = game.assets.guide;
+        const img = this.game.assets.guide;
         if (img && img.complete) {
             // Guide is centered in guide.jpg
             const sx = img.width * 0.25;

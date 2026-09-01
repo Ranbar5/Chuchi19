@@ -366,5 +366,6 @@ class Game {
 let game;
 window.addEventListener('DOMContentLoaded', () => {
     game = new Game();
+    window.game = game;
     game.init();
 });

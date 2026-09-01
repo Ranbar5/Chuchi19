@@ -7,7 +7,12 @@ class EmotionBarsUI {
         this.container = document.getElementById('emotion-bars-container');
         this.bars = {};
         this.changeIndicators = [];
+        this._onEmotionChange = this._onEmotionChange.bind(this);
         this.init();
+    }
+
+    _onEmotionChange(emotions, delta) {
+        this.update(emotions, delta);
     }
 
     init() {
@@ -35,12 +40,14 @@ class EmotionBarsUI {
         });
 
         // Listen for emotion changes
-        emotionTracker.onChange((emotions, delta) => {
-            this.update(emotions, delta);
-        });
+        emotionTracker.onChange(this._onEmotionChange);
 
         // Initial update
         this.update(emotionTracker.get(), {});
+    }
+
+    destroy() {
+        emotionTracker.offChange(this._onEmotionChange);
     }
 
     update(emotions, delta) {

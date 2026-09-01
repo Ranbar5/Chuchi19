@@ -30,6 +30,10 @@ class EmotionTracker {
             changes: delta,
             reason,
         });
+        // Keep history bounded
+        if (this.history.length > 200) {
+            this.history = this.history.slice(-100);
+        }
 
         // Notify listeners
         this.listeners.forEach(fn => fn(this.emotions, delta, reason));
@@ -59,6 +63,11 @@ class EmotionTracker {
     // --- Subscribe to changes ---
     onChange(callback) {
         this.listeners.push(callback);
+    }
+
+    // --- Unsubscribe from changes ---
+    offChange(callback) {
+        this.listeners = this.listeners.filter(fn => fn !== callback);
     }
 
     // --- Get recap data ---

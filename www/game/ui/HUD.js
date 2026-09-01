@@ -179,7 +179,14 @@ class HUD {
             rows.forEach(({ label, value }) => {
                 const row = document.createElement('div');
                 row.className = 'stat-row';
-                row.innerHTML = `<span class="stat-label">${label}</span><span class="stat-value">${value}</span>`;
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'stat-label';
+                labelSpan.textContent = label;
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'stat-value';
+                valueSpan.textContent = value;
+                row.appendChild(labelSpan);
+                row.appendChild(valueSpan);
                 statsEl.appendChild(row);
             });
         }
