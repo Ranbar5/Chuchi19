@@ -1,0 +1,7 @@
+node_modules/
+android/app/build/
+android/capacitor/build/
+android/.gradle/
+.idea/
+.vscode/
+*.log

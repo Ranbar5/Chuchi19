@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Felipe 19 — Aventura 2D de Inteligencia Emocional. Aprende autocontrol, paciencia y toma de decisiones responsable.">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Felipe 19 — Aventura Emocional</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles/index.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-container">
+            <div class="loading-logo">
+                <div class="logo-glow"></div>
+                <h1 class="logo-text">FELIPE<span class="logo-number">19</span></h1>
+                <p class="logo-subtitle">EXPLORO • APRENDO • DESCUBRO</p>
+            </div>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loading-bar"></div>
+            </div>
+            <p class="loading-text" id="loading-text">Cargando aventura...</p>
+        </div>
+        <div class="loading-particles" id="loading-particles"></div>
+    </div>
+
+    <!-- Game Container -->
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        
+        <!-- UI Overlay (HTML elements rendered over canvas) -->
+        <div id="ui-overlay">
+            <!-- HUD -->
+            <div id="hud" class="hidden">
+                <div id="hud-top">
+                    <div id="emotion-bars-container"></div>
+                    <div id="hud-actions">
+                        <button id="btn-vault" class="hud-btn" title="Bóveda">🔒</button>
+                        <button id="btn-pause" class="hud-btn" title="Pausa">⏸️</button>
+                    </div>
+                </div>
+                <div id="hud-timer" class="hidden">
+                    <div class="timer-ring">
+                        <svg viewBox="0 0 36 36">
+                            <path class="timer-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            <path class="timer-fill" id="timer-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        </svg>
+                        <span id="timer-text">60</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dialog Box -->
+            <div id="dialog-box" class="hidden">
+                <div class="dialog-portrait" id="dialog-portrait">
+                    <div class="portrait-frame"></div>
+                </div>
+                <div class="dialog-content">
+                    <p class="dialog-name" id="dialog-name">Guía</p>
+                    <p class="dialog-text" id="dialog-text"></p>
+                    <div class="dialog-choices" id="dialog-choices"></div>
+                    <div class="dialog-continue" id="dialog-continue">▼ Toca para continuar</div>
+                </div>
+            </div>
+            
+            <!-- Vault Panel -->
+            <div id="vault-panel" class="hidden">
+                <div class="vault-header">
+                    <h2>🔒 Bóveda de Tesoros</h2>
+                    <button id="vault-close" class="close-btn">✕</button>
+                </div>
+                <div class="vault-grid" id="vault-grid"></div>
+                <p class="vault-hint" id="vault-hint">Los objetos que guardes aquí podrán ayudarte en el futuro...</p>
+            </div>
+            
+            <!-- Pause Menu -->
+            <div id="pause-menu" class="hidden">
+                <div class="pause-card">
+                    <h2>⏸️ Pausa</h2>
+                    <button class="menu-btn" id="btn-resume">▶️ Continuar</button>
+                    <button class="menu-btn" id="btn-restart-level">🔄 Reiniciar nivel</button>
+                    <button class="menu-btn" id="btn-main-menu">🏠 Menú principal</button>
+                </div>
+            </div>
+            
+            <!-- Level Complete Overlay -->
+            <div id="level-complete" class="hidden">
+                <div class="complete-card">
+                    <div class="complete-stars" id="complete-stars"></div>
+                    <h2 id="complete-title">¡Nivel Completado!</h2>
+                    <div class="complete-stats" id="complete-stats"></div>
+                    <div class="complete-emotion-change" id="complete-emotion-change"></div>
+                    <button class="menu-btn primary" id="btn-next-level">Siguiente ▶️</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (loaded as modules) -->
+    <script src="game/data/dialogues.js"></script>
+    <script src="game/data/puzzles.js"></script>
+    <script src="game/data/levels.js"></script>
+    <script src="game/systems/AudioManager.js"></script>
+    <script src="game/systems/DDASystem.js"></script>
+    <script src="game/systems/EmotionTracker.js"></script>
+    <script src="game/systems/VaultSystem.js"></script>
+    <script src="game/systems/NarratorSystem.js"></script>
+    <script src="game/ui/EmotionBars.js"></script>
+    <script src="game/ui/DialogBox.js"></script>
+    <script src="game/ui/HUD.js"></script>
+    <!-- Scenes -->
+    <script src="game/scenes/MenuScene.js"></script>
+    <script src="game/scenes/MapScene.js"></script>
+    <script src="game/scenes/IntroScene.js"></script>
+    <script src="game/scenes/StoryScene.js"></script>
+    <script src="game/scenes/NumberMazeScene.js"></script>
+    <script src="game/scenes/MathShooterScene.js"></script>
+    <script src="game/scenes/ObjectSearchScene.js"></script>
+    <script src="game/scenes/CoordinationScene.js"></script>
+    <script src="game/scenes/MemoryScene.js"></script>
+    <script src="game/scenes/BreathingScene.js"></script>
+    <script src="game/scenes/RecapScene.js"></script>
+    <script src="game/engine.js"></script>
+</body>
+</html>
