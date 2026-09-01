@@ -109,9 +109,11 @@ class MapScene {
     update(dt) {
         // Clamp scroll bounds
         if (this.nodes.length > 0) {
-            const minY = -this.nodes[this.nodes.length - 1].y + this.game.height / 2;
-            const maxY = -this.nodes[0].y + this.game.height / 2;
-            this.targetScroll = Math.max(minY, Math.min(maxY, this.targetScroll));
+            // Nodos van del nivel 1 (arriba) al último (abajo).
+            // topBound centra el primer nodo, bottomBound centra el último.
+            const topBound = -this.nodes[0].y + this.game.height / 2;
+            const bottomBound = -this.nodes[this.nodes.length - 1].y + this.game.height / 2;
+            this.targetScroll = Math.max(topBound, Math.min(bottomBound, this.targetScroll));
         }
         this.scrollOffset += (this.targetScroll - this.scrollOffset) * 10 * dt;
     }
