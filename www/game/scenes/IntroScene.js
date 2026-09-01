@@ -105,11 +105,11 @@ class IntroScene {
             ctx.restore();
         }
 
-        // Draw Felipe (simple character)
-        this._drawFelipe(ctx, w * 0.3, h * 0.45);
+        // Draw Felipe (full-body cartoon)
+        this._drawFelipe(ctx, w * 0.3, h * 0.76, Math.min(w, h) / 460, this.animTimer);
 
         // Draw Guide creature
-        this._drawGuide(ctx, this.guideX, this.guideY + this.guideBounce);
+        this._drawGuide(ctx, this.guideX, this.guideY + this.guideBounce, Math.min(w, h) / 480, this.animTimer);
 
         // Ground
         ctx.fillStyle = '#111640';
@@ -128,75 +128,14 @@ class IntroScene {
         }
     }
 
-    _drawFelipe(ctx, x, y) {
-        ctx.save();
-        ctx.translate(x, y);
-        
-        // We want to draw a circular crop of the image
-        const radius = 45;
-        
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        ctx.closePath();
-        
-        // Add a nice border/glow
-        ctx.shadowColor = '#00e5ff';
-        ctx.shadowBlur = 15;
-        ctx.fillStyle = '#00e5ff';
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-
-        ctx.clip(); // clip to circle
-        
-        // Draw image
-        const img = this.game.assets.characters;
-        if (img && img.complete) {
-            // Source crop for Felipe in characters.jpg: left side
-            const sx = img.width * 0.18;
-            const sy = img.height * 0.15;
-            const sw = img.width * 0.35;
-            const sh = img.height * 0.35;
-            ctx.drawImage(img, sx, sy, sw, sh, -radius, -radius, radius * 2, radius * 2);
-        }
-        ctx.restore();
+    _drawFelipe(ctx, x, y, scale, t) {
+        // Full-body cartoon Felipe standing on the ground
+        CharacterArt.drawFelipe(ctx, x, y, scale, t);
     }
 
-    _drawGuide(ctx, x, y) {
-        ctx.save();
-        ctx.translate(x, y);
-
-        const radius = 55;
-        
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        ctx.closePath();
-        
-        // Glow and border
-        ctx.shadowColor = '#3366ff';
-        ctx.shadowBlur = 20;
-        ctx.fillStyle = '#3366ff';
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-
-        ctx.clip();
-
-        // Draw image
-        const img = this.game.assets.guide;
-        if (img && img.complete) {
-            // Guide is centered in guide.jpg
-            const sx = img.width * 0.25;
-            const sy = img.height * 0.20;
-            const sw = img.width * 0.50;
-            const sh = img.height * 0.50;
-            ctx.drawImage(img, sx, sy, sw, sh, -radius, -radius, radius * 2, radius * 2);
-        }
-        ctx.restore();
+    _drawGuide(ctx, x, y, scale, t) {
+        // Full-body cartoon guide, floating
+        CharacterArt.drawGuide(ctx, x, y, scale, t);
     }
 
     handleInput(type, x, y) {

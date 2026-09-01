@@ -91,35 +91,8 @@ class StoryScene {
     }
 
     _drawGuideSmall(ctx, x, y) {
-        ctx.save();
-        ctx.translate(x, y);
-
-        const radius = 40;
-        
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        ctx.closePath();
-        
-        ctx.shadowColor = '#3366ff';
-        ctx.shadowBlur = 15;
-        ctx.fillStyle = '#3366ff';
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-
-        ctx.clip();
-
-        const img = this.game.assets.guide;
-        if (img && img.complete) {
-            const sx = img.width * 0.25;
-            const sy = img.height * 0.20;
-            const sw = img.width * 0.50;
-            const sh = img.height * 0.50;
-            ctx.drawImage(img, sx, sy, sw, sh, -radius, -radius, radius * 2, radius * 2);
-        }
-        ctx.restore();
+        const scale = Math.min(this.game.width, this.game.height) / 520;
+        CharacterArt.drawGuide(ctx, x, y + 40, scale, this.animTimer);
     }
 
     handleInput(type, x, y) {
