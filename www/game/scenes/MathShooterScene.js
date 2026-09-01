@@ -386,19 +386,18 @@ class MathShooterScene {
     }
 
     _drawEnemyShip(ctx, t) {
+        // Todos los objetivos son visualmente idénticos: la única pista para
+        // elegir es resolver la operación. El acierto/error se revela al impactar.
         ctx.save();
         ctx.translate(t.x, t.y);
 
-        // Hostile aura for wrong answers, calm cyan for correct
-        const main = t.isCorrect ? '#2e6fd8' : '#7a4a9a';
-        const glint = t.isCorrect ? 'rgba(0,229,255,0.35)' : 'rgba(255,105,180,0.35)';
-
-        ctx.shadowColor = t.isCorrect ? '#00e5ff' : '#ff6f91';
+        // Aura uniforme (el mismo tono para todos)
+        ctx.shadowColor = 'rgba(170, 90, 255, 0.8)';
         ctx.shadowBlur = 14;
 
-        // Saucer body
+        // Saucer body (gradiente violeta-azul uniforme para todos)
         const grad = ctx.createLinearGradient(0, -22, 0, 22);
-        grad.addColorStop(0, main);
+        grad.addColorStop(0, '#7a4a9a');
         grad.addColorStop(1, '#141a3a');
         ctx.fillStyle = grad;
         ctx.beginPath();
@@ -413,9 +412,9 @@ class MathShooterScene {
         ctx.arc(0, -6, t.radius * 0.42, Math.PI, 0);
         ctx.fill();
 
-        // Blinking lights
+        // Luces parpadeantes (mismo color para todos, neutrales)
         const blink = Math.sin(t.wobble * 1.4) * 0.5 + 0.5;
-        ctx.fillStyle = t.isCorrect ? `rgba(46,213,115,${0.4 + blink * 0.6})` : `rgba(255,71,87,${0.4 + blink * 0.6})`;
+        ctx.fillStyle = `rgba(160, 200, 255, ${0.4 + blink * 0.5})`;
         for (let i = 0; i < 3; i++) {
             const lx = -t.radius * 0.6 + i * t.radius * 0.6;
             ctx.beginPath();
@@ -433,8 +432,8 @@ class MathShooterScene {
         ctx.fillText(t.value, 0, 2);
         ctx.shadowBlur = 0;
 
-        // Ring highlight
-        ctx.strokeStyle = glint;
+        // Ring highlight uniforme
+        ctx.strokeStyle = 'rgba(170, 90, 255, 0.25)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.ellipse(0, 0, t.radius + 6, t.radius * 0.72 + 6, 0, 0, Math.PI * 2);
