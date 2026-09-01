@@ -70,6 +70,7 @@ class ObjectSearchScene {
 
         this.startTime = Date.now();
         hud.show();
+        this._updateObjective();
         if (this.timeLimit !== Infinity) {
             hud.startTimer(this.timeLimit, () => this._onTimeout());
         }
@@ -81,6 +82,18 @@ class ObjectSearchScene {
                 text: `¡Bienvenido al ${puzzle.sceneName || 'Laboratorio'}! Busca objetos ocultos. Algunos son especiales y deberías guardarlos para después... 🔍`
             }]);
         }, 500);
+    }
+
+    _updateObjective() {
+        const total = this.objects.length;
+        const found = this.foundObjects.length;
+        const keyIcons = this.objects
+            .filter(o => o.isKey)
+            .map(o => o.found ? '✅' : o.icon)
+            .join(' ');
+        hud.setObjective(
+            `Busca los objetos ocultos (${found}/${total}) · Claves: ${keyIcons} (${Math.min(this.foundKeys, this.requiredKeys)}/${this.requiredKeys})`
+        );
     }
 
     update(dt) {
@@ -359,6 +372,7 @@ class ObjectSearchScene {
         obj.found = true;
         this.foundObjects.push(obj);
         audioManager.playCollect();
+        this._updateObjective();
 
         if (obj.isKey) {
             this.foundKeys++;
@@ -439,6 +453,7 @@ class ObjectSearchScene {
 
     exit() {
         hud.stopTimer();
+        hud.clearObjective();
         audioManager.stopMusic();
     }
 }

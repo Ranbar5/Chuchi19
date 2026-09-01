@@ -110,6 +110,7 @@ class NumberMazeScene {
         // Start
         this.startTime = Date.now();
         hud.show();
+        hud.setObjective(`Conecta los números del 1 al ${this.maxNumber} sin cruzar las paredes`);
         if (this.timeLimit !== Infinity) {
             hud.startTimer(this.timeLimit, () => this._onTimeout());
         }
@@ -428,6 +429,7 @@ class NumberMazeScene {
 
     exit() {
         hud.stopTimer();
+        hud.clearObjective();
         audioManager.stopMusic();
     }
 }

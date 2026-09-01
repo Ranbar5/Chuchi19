@@ -82,7 +82,7 @@ class MathShooterScene {
 
         this.startTime = Date.now();
         hud.show();
-        hud.setEmotionBarsBottom(true);
+        hud.setObjective('Dispara al resultado correcto');
         audioManager.startMusic('gameplay');
 
         // Tutorial
@@ -824,6 +824,6 @@ class MathShooterScene {
     exit() {
         narratorSystem.clear();
         audioManager.stopMusic();
-        hud.setEmotionBarsBottom(false);
+        hud.clearObjective();
     }
 }

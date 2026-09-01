@@ -17,6 +17,7 @@ class MapScene {
         this.config = config;
         hud.show();
         hud.stopTimer();
+        hud.setObjective('Elige tu próxima misión 🗺️');
         
         // Generate nodes based on total levels
         this.nodes = LEVELS.map((level, i) => {
@@ -37,7 +38,9 @@ class MapScene {
         }
     }
 
-    exit() {}
+    exit() {
+        hud.clearObjective();
+    }
 
     _onDown(e) {
         this.isDragging = true;

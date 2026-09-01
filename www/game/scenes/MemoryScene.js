@@ -65,6 +65,7 @@ class MemoryScene {
 
         this.startTime = Date.now();
         hud.show();
+        hud.setObjective('Memoriza y repite la secuencia 🧠');
         if (this.timeLimit !== Infinity) {
             hud.startTimer(this.timeLimit, () => this._onTimeout());
         }
@@ -282,6 +283,7 @@ class MemoryScene {
 
     exit() {
         hud.stopTimer();
+        hud.clearObjective();
         audioManager.stopMusic();
     }
 }

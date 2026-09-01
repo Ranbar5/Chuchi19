@@ -12,6 +12,7 @@ class HUD {
         this.btnPause = document.getElementById('btn-pause');
         this.btnHome = document.getElementById('btn-home');
         this.emotionBars = document.getElementById('emotion-bars-container');
+        this.objectiveEl = document.getElementById('objective');
         this.pauseMenu = document.getElementById('pause-menu');
         this.levelComplete = document.getElementById('level-complete');
         this.vaultPanel = document.getElementById('vault-panel');
@@ -81,9 +82,16 @@ class HUD {
     show() { this.hud?.classList.remove('hidden'); }
     hide() { this.hud?.classList.add('hidden'); }
 
-    // --- Emotion bars position ---
-    setEmotionBarsBottom(bottom) {
-        this.emotionBars?.classList.toggle('bottom', bottom);
+    // --- Objective (what the player has to achieve) ---
+    setObjective(text) {
+        if (!this.objectiveEl) return;
+        if (!text) { this.clearObjective(); return; }
+        this.objectiveEl.textContent = text;
+        this.objectiveEl.classList.remove('hidden');
+    }
+
+    clearObjective() {
+        this.objectiveEl?.classList.add('hidden');
     }
 
     // --- Timer ---

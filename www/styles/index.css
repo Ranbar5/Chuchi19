@@ -232,31 +232,44 @@ html, body {
 }
 
 #emotion-bars-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    max-width: 200px;
-}
-
-/* Shooter: emotion bars docked at the bottom so the ship flies over them */
-#emotion-bars-container.bottom {
     position: fixed;
-    bottom: 12px;
+    bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
     flex-direction: row;
+    gap: var(--space-xs);
     max-width: calc(100% - var(--space-md) * 2);
-    gap: var(--space-sm);
     padding: 6px 12px;
     border-radius: var(--radius-md);
     background: rgba(10, 14, 39, 0.72);
     backdrop-filter: blur(8px);
     border: 1px solid rgba(0, 229, 255, 0.25);
+    pointer-events: none;
+    z-index: 10;
 }
 
-#emotion-bars-container.bottom .emotion-bar {
-    width: 120px;
+#emotion-bars-container .emotion-bar {
+    width: 110px;
+}
+
+/* Objective pill (what to achieve in the current scene) */
+#objective {
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-md);
+    max-width: calc(100% - var(--space-md) * 2 - 150px);
+    padding: 5px 12px;
+    border-radius: var(--radius-md);
+    background: rgba(10, 14, 39, 0.72);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 193, 7, 0.35);
+    font-family: var(--font-title);
+    font-size: 0.78rem;
+    color: #ffe082;
+    line-height: 1.35;
+    z-index: 11;
+    pointer-events: none;
 }
 
 #hud-actions {

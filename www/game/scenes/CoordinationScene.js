@@ -67,6 +67,7 @@ class CoordinationScene {
 
         this.startTime = Date.now();
         hud.show();
+        hud.setObjective('Sigue el ritmo: toca el lado que se ilumina');
         audioManager.startMusic('gameplay');
 
         this.state = 'intro';
@@ -386,6 +387,7 @@ class CoordinationScene {
     }
 
     exit() {
+        hud.clearObjective();
         audioManager.stopMusic();
     }
 }
