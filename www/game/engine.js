@@ -51,6 +51,7 @@ class Game {
             MemoryScene: () => new MemoryScene(this),
             BreathingScene: () => new BreathingScene(this),
             RecapScene: () => new RecapScene(this),
+            TardigradeScene: () => new TardigradeScene(this),
         };
 
         // Setup canvas

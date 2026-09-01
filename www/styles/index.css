@@ -214,51 +214,31 @@ html, body {
     pointer-events: auto;
 }
 
-/* --- HUD --- */
+/* --- HUD (bottom dock: objective + emotion bars + icons) --- */
 #hud {
     position: absolute;
-    top: 0;
+    top: auto;
+    bottom: 0;
     left: 0;
     right: 0;
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-xs) var(--space-md) var(--space-sm);
+    display: flex;
+    justify-content: center;
     z-index: 10;
-}
-
-#hud-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: var(--space-md);
-}
-
-#emotion-bars-container {
-    position: fixed;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: row;
-    gap: var(--space-xs);
-    max-width: calc(100% - var(--space-md) * 2);
-    padding: 6px 12px;
-    border-radius: var(--radius-md);
-    background: rgba(10, 14, 39, 0.72);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(0, 229, 255, 0.25);
     pointer-events: none;
-    z-index: 10;
 }
 
-#emotion-bars-container .emotion-bar {
-    width: 110px;
+#hud-bottom {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    border-radius: var(--radius-md);
 }
 
 /* Objective pill (what to achieve in the current scene) */
 #objective {
-    position: absolute;
-    top: var(--space-sm);
-    left: var(--space-md);
-    max-width: calc(100% - var(--space-md) * 2 - 150px);
     padding: 5px 12px;
     border-radius: var(--radius-md);
     background: rgba(10, 14, 39, 0.72);
@@ -268,14 +248,49 @@ html, body {
     font-size: 0.78rem;
     color: #ffe082;
     line-height: 1.35;
-    z-index: 11;
     pointer-events: none;
+    text-align: center;
+}
+
+#hud-main-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+#emotion-bars-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    flex: 1;
+    min-width: 0;
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    background: rgba(10, 14, 39, 0.72);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 229, 255, 0.25);
+    pointer-events: none;
+}
+
+#emotion-bars-container .emotion-bar {
+    flex: 1;
+    min-width: 56px;
+    max-width: 110px;
+}
+
+#hud-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    pointer-events: auto;
 }
 
 #hud-actions {
     display: flex;
     gap: var(--space-sm);
-    margin-left: auto;
 }
 
 .hud-btn {
@@ -303,10 +318,7 @@ html, body {
 
 /* Timer */
 #hud-timer {
-    position: absolute;
-    top: var(--space-md);
-    left: 50%;
-    transform: translateX(-50%);
+    flex-shrink: 0;
 }
 
 .timer-ring {
@@ -753,6 +765,42 @@ html, body {
 
 .no-pointer {
     pointer-events: none;
+}
+
+/* --- Tardígrado Explorer Overlay --- */
+#tardigrade-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    background: #06081f;
+}
+#tardigrade-overlay.hidden {
+    display: none !important;
+}
+.tardigrade-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, #0a0e27, #111640);
+    border-bottom: 1px solid rgba(0, 229, 255, 0.25);
+    color: #e8eaf6;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.tardigrade-bar .close-btn {
+    flex-shrink: 0;
+}
+#tardigrade-frame {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    display: block;
 }
 
 /* --- Animations --- */

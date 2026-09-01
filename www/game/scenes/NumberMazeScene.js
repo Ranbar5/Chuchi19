@@ -62,25 +62,10 @@ class NumberMazeScene {
             this.numbers = [];
             this.walls = [];
             
-            // Colocar N números aleatoriamente (ej. grid 4x4 = max 4 numeros, grid 6x6 = max 6 numeros)
+            // Colocar N números aleatorios con garantía de solución:
+            // debe existir un camino 1→2→3→…→N evitando otros números y paredes.
             const numPoints = Math.min(this.gridSize, 6);
-            let availableCells = [];
-            for(let r=0; r<this.gridSize; r++){
-                for(let c=0; c<this.gridSize; c++){
-                    availableCells.push({row: r, col: c});
-                }
-            }
-            
-            // Shuffle and pick
-            for(let i=availableCells.length-1; i>0; i--){
-                const j = Math.floor(Math.random() * (i+1));
-                [availableCells[i], availableCells[j]] = [availableCells[j], availableCells[i]];
-            }
-            
-            for(let i=1; i<=numPoints; i++){
-                const cell = availableCells.pop();
-                this.numbers.push({row: cell.row, col: cell.col, value: i});
-            }
+            this.numbers = this._generateSolvableNumbers(numPoints);
         }
         
         this.maxNumber = Math.max(...this.numbers.map(n => n.value));
@@ -129,6 +114,70 @@ class NumberMazeScene {
                 narratorSystem.say([{ speaker: 'guia', text: hint }]);
             }, 500);
         }
+    }
+
+    _generateSolvableNumbers(numPoints) {
+        const cells = [];
+        for (let r = 0; r < this.gridSize; r++) {
+            for (let c = 0; c < this.gridSize; c++) {
+                cells.push({ row: r, col: c });
+            }
+        }
+        let numbers = [];
+        for (let attempt = 0; attempt < 200; attempt++) {
+            for (let i = cells.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cells[i], cells[j]] = [cells[j], cells[i]];
+            }
+            numbers = [];
+            for (let i = 1; i <= numPoints; i++) {
+                const cell = cells[i - 1];
+                numbers.push({ row: cell.row, col: cell.col, value: i });
+            }
+            if (this._mazeSolvable(numbers)) {
+                break;
+            }
+        }
+        return numbers;
+    }
+
+    _mazeSolvable(numbers) {
+        const byValue = {};
+        numbers.forEach(n => { byValue[n.value] = n; });
+        const maxV = Math.max(...numbers.map(n => n.value));
+        for (let k = 1; k < maxV; k++) {
+            const from = byValue[k];
+            const to = byValue[k + 1];
+            if (!from || !to) return false;
+            if (!this._hasPath(from, to, numbers, k + 1)) return false;
+        }
+        return true;
+    }
+
+    _hasPath(from, to, numbers, targetVal) {
+        const blocked = new Set();
+        numbers.forEach(n => {
+            if (n.value !== targetVal) blocked.add(n.row * 100 + n.col);
+        });
+        this.walls.forEach(w => blocked.add(w.row * 100 + w.col));
+        const seen = new Set([from.row * 100 + from.col]);
+        const queue = [[from.row, from.col]];
+        const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        while (queue.length) {
+            const [r, c] = queue.shift();
+            if (r === to.row && c === to.col) return true;
+            for (const [dr, dc] of dirs) {
+                const nr = r + dr;
+                const nc = c + dc;
+                const key = nr * 100 + nc;
+                if (nr < 0 || nr >= this.gridSize || nc < 0 || nc >= this.gridSize) continue;
+                if (blocked.has(key)) continue;
+                if (seen.has(key)) continue;
+                seen.add(key);
+                queue.push([nr, nc]);
+            }
+        }
+        return false;
     }
 
     _buildGrid() {

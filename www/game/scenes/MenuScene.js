@@ -58,6 +58,7 @@ class MenuScene {
             { id: 'continue', label: '▶️ Continuar', x: cx - btnW / 2, y: startY + 65, w: btnW, h: btnH },
             { id: 'challenge', label: '⚡ Modo Desafío', x: cx - btnW / 2, y: startY + 130, w: btnW, h: btnH },
             { id: 'reflection', label: '🧘 Modo Reflexión', x: cx - btnW / 2, y: startY + 195, w: btnW, h: btnH },
+            { id: 'tardigrade', label: '🪸 Tardígrado Explorer', x: cx - 110, y: this.game.height - 118, w: 220, h: 44 },
         ];
 
         this.logoY = -100;
@@ -303,6 +304,9 @@ class MenuScene {
                         ddaSystem.setMode('reflection');
                         this.game.currentLevel = 0;
                         this.game.changeScene('IntroScene');
+                        break;
+                    case 'tardigrade':
+                        this.game.changeScene('TardigradeScene');
                         break;
                 }
                 return;

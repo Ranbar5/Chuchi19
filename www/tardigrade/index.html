@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tardígrado Explorer: Conecta Secuencias</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Orbitron:wght@600;800;900&family=Quicksand:wght@500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #070719;
+            --bg-card: rgba(18, 18, 48, 0.85);
+            --neon-blue: #00f2ff;
+            --neon-pink: #ff2a8d;
+            --neon-purple: #b537f2;
+            --neon-green: #22c55e;
+            --neon-green-glow: #4ade80;
+            --neon-yellow: #ffe600;
+            --neon-orange: #ff9900;
+            --tardi-body: #a855f7;
+            --tardi-belly: #c084fc;
+            --tardi-accent: #f472b6;
+            --grid-line: rgba(255, 255, 255, 0.08);
+            --grid-size: 6;
+            --board-size: min(54vw, min(calc(100vh - 120px), 640px));
+        }
+
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background: radial-gradient(circle at top, #14143a 0%, var(--bg) 100%);
+            color: white;
+            font-family: 'Fredoka', 'Quicksand', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 8px 16px 20px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1140px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .brand-icon {
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 8px var(--neon-pink));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin: 0;
+            background: linear-gradient(90deg, var(--neon-blue), #d946ef, var(--neon-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 16px rgba(0, 242, 255, 0.4);
+        }
+
+        .subtitle {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sound-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            color: var(--neon-blue);
+            font-size: 1.1rem;
+            padding: 6px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sound-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* --- NOTIFICACIÓN CÓMICA DE ESTADO --- */
+        .toast-banner {
+            max-width: 1140px;
+            width: 100%;
+            background: linear-gradient(90deg, rgba(255, 42, 141, 0.92), rgba(181, 55, 242, 0.92));
+            color: #ffffff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 6px 14px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 16px rgba(255, 42, 141, 0.4);
+            display: none;
+            animation: toast-slide 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+
+        @keyframes toast-slide {
+            0% {
+                transform: translateY(-8px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* --- CONTENEDOR PRINCIPAL: 2 COLUMNAS --- */
+        .main-container {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 1140px;
+        }
+
+        .board-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .panel-column {
+            width: 380px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* --- SELECTOR DE MODOS --- */
+        .mode-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            background: rgba(8, 8, 28, 0.9);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            width: 100%;
+        }
+
+        .mode-tab {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 8px 4px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            transition: all 0.2s ease;
+            box-shadow: none;
+        }
+
+        .mode-tab.active {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(0, 242, 255, 0.25));
+            color: white;
+            border: 1px solid var(--neon-green);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.35);
+        }
+
+        .mode-tab-icon {
+            font-size: 1rem;
+        }
+
+        /* --- MENÚ DE CONFIGURACIÓN --- */
+        .config-menu {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: space-between;
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            padding: 10px 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 242, 255, 0.25);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 0 12px rgba(0, 242, 255, 0.05);
+            width: 100%;
+        }
+
+        .select-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        label {
+            font-size: 0.65rem;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-blue);
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        select {
+            background: #0d0d26;
+            color: #f1f5f9;
+            border: 1px solid rgba(0, 242, 255, 0.4);
+            padding: 7px 9px;
+            border-radius: 8px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.82rem;
+            cursor: pointer;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 10px rgba(255, 42, 141, 0.3);
+        }
+
+        .stats-bar {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 8px;
+            font-size: 0.72rem;
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .star-badge {
+            color: var(--neon-yellow);
+            font-weight: bold;
+            font-size: 0.82rem;
+            letter-spacing: 2px;
+        }
+
+        /* --- HUD DE SECUENCIA NUMÉRICA --- */
+        .sequence-hud {
+            width: 100%;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(0, 242, 255, 0.1));
+            border: 1px solid var(--neon-green);
+            border-radius: 12px;
+            padding: 8px 10px;
+            box-shadow: 0 0 14px rgba(34, 197, 94, 0.2);
+            animation: pop-in 0.3s ease;
+        }
+
+        .sequence-hud-header {
+            font-size: 0.68rem;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-green);
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sequence-dots {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 4px 2px;
+        }
+
+        .seq-dot {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #0f172a;
+            border: 1.5px solid #475569;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.25s;
+        }
+
+        .seq-dot.completed {
+            background: var(--neon-green);
+            color: #032b13;
+            border-color: #ffffff;
+            box-shadow: 0 0 8px var(--neon-green);
+        }
+
+        .seq-dot.active-target {
+            background: #000;
+            color: var(--neon-yellow);
+            border-color: var(--neon-yellow);
+            box-shadow: 0 0 12px var(--neon-yellow);
+            transform: scale(1.15);
+            animation: pulse-target 1s infinite alternate;
+        }
+
+        @keyframes pulse-target {
+            0% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1.22);
+            }
+        }
+
+        .seq-arrow {
+            color: #64748b;
+            font-size: 0.7rem;
+        }
+
+        /* --- HUD DE MODO PROGRAMADOR --- */
+        .programmer-hud {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(0, 242, 255, 0.35);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.12);
+        }
+
+        .programmer-hud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.72rem;
+            color: var(--neon-blue);
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .programmer-queue {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto;
+            min-height: 42px;
+            padding: 6px 8px;
+            background: rgba(6, 6, 20, 0.85);
+            border: 1px dashed rgba(0, 242, 255, 0.3);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .prog-empty-hint {
+            font-size: 0.7rem;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .prog-cmd-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            background: rgba(0, 242, 255, 0.15);
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-size: 1rem;
+            font-weight: bold;
+            flex-shrink: 0;
+            box-shadow: 0 0 8px rgba(0, 242, 255, 0.35);
+            animation: popIn 0.15s ease-out;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.6); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .programmer-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-prog {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: none;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.78rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-prog-run {
+            background: linear-gradient(135deg, var(--neon-green), #16a34a);
+            color: #032b13;
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-prog-run:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 18px rgba(34, 197, 94, 0.7);
+        }
+
+        .btn-prog-undo {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid #f59e0b;
+            color: #fbbf24;
+        }
+
+        .btn-prog-undo:hover {
+            background: rgba(245, 158, 11, 0.35);
+        }
+
+        .btn-prog-clear {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #f87171;
+        }
+
+        .btn-prog-clear:hover {
+            background: rgba(239, 68, 68, 0.35);
+        }
+
+        /* --- TABLERO 100% RESPONSIVO CON CAPA DE RASTRO SVG --- */
+        #board-wrapper {
+            position: relative;
+            padding: 6px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(0, 242, 255, 0.4));
+            border-radius: 18px;
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.25), 0 14px 35px rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #board {
+            position: relative;
+            width: var(--board-size);
+            height: var(--board-size);
+            display: grid;
+            grid-template-columns: repeat(var(--grid-size, 6), 1fr);
+            grid-template-rows: repeat(var(--grid-size, 6), 1fr);
+            gap: 0;
+            background: #060614;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #path-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 65;
+        }
+
+        .board-shake {
+            animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both !important;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-2px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(3px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+
+        .cell {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            border-right: 1px solid var(--grid-line);
+            border-bottom: 1px solid var(--grid-line);
+            box-sizing: border-box;
+            transition: background 0.2s ease;
+        }
+
+        .cell:nth-child(var(--grid-size)n) {
+            border-right: none;
+        }
+
+        .cell.hint-highlight {
+            background: rgba(255, 230, 0, 0.25) !important;
+            box-shadow: inset 0 0 14px var(--neon-yellow);
+            animation: hint-glow 0.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes hint-glow {
+            0% {
+                opacity: 0.6;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* --- ESTACIONES NUMÉRICAS CIRCULARES (ESTILO REFERENCIA) --- */
+        .number-node {
+            position: relative;
+            z-index: 60;
+            width: calc(var(--board-size) / var(--grid-size, 6) * 0.76);
+            height: calc(var(--board-size) / var(--grid-size, 6) * 0.76);
+            border-radius: 50%;
+            background: #000000;
+            border: 2.5px solid #ffffff;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: calc(var(--board-size) / var(--grid-size, 6) * 0.44);
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .number-node.active-target {
+            border-color: var(--neon-yellow);
+            color: var(--neon-yellow);
+            box-shadow: 0 0 18px var(--neon-yellow), inset 0 0 8px rgba(255, 230, 0, 0.4);
+            transform: scale(1.1);
+            animation: node-pulse 1.2s infinite alternate;
+        }
+
+        @keyframes node-pulse {
+            0% {
+                transform: scale(1.02);
+            }
+
+            100% {
+                transform: scale(1.14);
+            }
+        }
+
+        .number-node.completed {
+            background: var(--neon-green);
+            color: #000000;
+            border-color: #ffffff;
+            box-shadow: 0 0 12px var(--neon-green);
+        }
+
+        /* --- MUROS Y OBSTÁCULOS ESTILO PUZZLE --- */
+        .wall {
+            background: radial-gradient(circle, rgba(255, 42, 141, 0.35) 0%, rgba(255, 42, 141, 0.08) 80%);
+            border: 2px solid var(--neon-pink) !important;
+            box-shadow: inset 0 0 8px rgba(255, 42, 141, 0.4), 0 0 6px rgba(255, 42, 141, 0.3);
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .wall::after {
+            content: "⚡";
+            font-size: calc(var(--board-size) / var(--grid-size, 6) * 0.45);
+            line-height: 1;
+            filter: drop-shadow(0 0 5px var(--neon-pink));
+            opacity: 0.85;
+            animation: pulse-wall 2s infinite alternate;
+        }
+
+        @keyframes pulse-wall {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        .goal {
+            background: radial-gradient(circle, rgba(57, 255, 116, 0.35) 0%, rgba(57, 255, 116, 0.08) 75%);
+            border: 2px dashed var(--neon-green) !important;
+            box-shadow: inset 0 0 12px rgba(57, 255, 116, 0.4), 0 0 10px rgba(57, 255, 116, 0.3);
+            border-radius: 6px;
+            z-index: 1;
+            animation: goal-pulse 2s ease-in-out infinite;
+        }
+
+        .goal-icon {
+            font-size: calc(var(--board-size) / var(--grid-size, 6) * 0.55);
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 0 10px var(--neon-green));
+            animation: float 2.5s ease-in-out infinite;
+        }
+
+        @keyframes goal-pulse {
+
+            0%,
+            100% {
+                box-shadow: inset 0 0 12px rgba(57, 255, 116, 0.4), 0 0 10px rgba(57, 255, 116, 0.3);
+            }
+
+            50% {
+                box-shadow: inset 0 0 20px rgba(57, 255, 116, 0.7), 0 0 18px rgba(57, 255, 116, 0.6);
+            }
+        }
+
+        /* --- EFECTO DE EXPLOSIÓN CÓMICA --- */
+        .explosion-particle {
+            position: absolute;
+            pointer-events: none;
+            z-index: 200;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: exp-fade 0.65s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+
+        @keyframes exp-fade {
+            0% {
+                transform: translate(-50%, -50%) scale(0.3);
+                opacity: 1;
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.3);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1.7);
+                opacity: 0;
+            }
+        }
+
+        .exp-shockwave {
+            width: calc(var(--board-size) / var(--grid-size, 6) * 1.4);
+            height: calc(var(--board-size) / var(--grid-size, 6) * 1.4);
+            border: 3px solid var(--neon-pink);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--neon-yellow), inset 0 0 15px var(--neon-pink);
+            position: absolute;
+        }
+
+        .exp-emoji {
+            font-size: calc(var(--board-size) / var(--grid-size, 6) * 0.9);
+            filter: drop-shadow(0 0 12px var(--neon-yellow));
+            z-index: 2;
+        }
+
+        /* --- PERSONAJE: TARDÍGRADO EN LA CABEZA DEL RASTRO --- */
+        #oso {
+            position: absolute;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: left 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.24s ease;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 8px rgba(168, 85, 247, 0.7));
+            will-change: left, top, transform;
+        }
+
+        .tardi-svg-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform-origin: center center;
+            animation: tardi-idle 3s ease-in-out infinite;
+        }
+
+        @keyframes tardi-idle {
+
+            0%,
+            100% {
+                transform: scale(1) translateY(0);
+            }
+
+            50% {
+                transform: scale(1.04, 0.96) translateY(-2px);
+            }
+        }
+
+        .tardi-waddling {
+            animation: tardi-waddle 0.24s ease-in-out !important;
+        }
+
+        @keyframes tardi-waddle {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+
+            35% {
+                transform: rotate(-10deg) scale(1.08, 0.92);
+            }
+
+            70% {
+                transform: rotate(10deg) scale(0.95, 1.05);
+            }
+
+            100% {
+                transform: rotate(0deg) scale(1);
+            }
+        }
+
+        /* --- EFECTO MAREADO (DIZZY) ILESO --- */
+        .is-dizzy #normal-eyes {
+            display: none !important;
+        }
+
+        .is-dizzy .dizzy-feature {
+            display: block !important;
+        }
+
+        .is-dizzy #normal-mouth {
+            display: none !important;
+        }
+
+        .is-dizzy #dizzy-mouth {
+            display: block !important;
+        }
+
+        .is-dizzy #tardi-visual {
+            animation: tardi-dizzy-wobble 1.6s ease-in-out !important;
+        }
+
+        @keyframes tardi-dizzy-wobble {
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+
+            15% {
+                transform: scale(1.15, 0.85) rotate(-22deg) translateY(2px);
+            }
+
+            30% {
+                transform: scale(0.9, 1.1) rotate(20deg) translateY(-2px);
+            }
+
+            45% {
+                transform: scale(1.1, 0.9) rotate(-16deg);
+            }
+
+            60% {
+                transform: scale(0.95, 1.05) rotate(12deg);
+            }
+
+            75% {
+                transform: scale(1.04, 0.96) rotate(-8deg);
+            }
+
+            90% {
+                transform: scale(0.98, 1.02) rotate(4deg);
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .dizzy-orbit {
+            animation: orbit-stars 1.2s linear infinite;
+            transform-origin: 50px 14px;
+        }
+
+        @keyframes orbit-stars {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Animación de Baile Festivo */
+        .dancing {
+            animation: tardi-dance 1.4s ease-in-out infinite !important;
+            filter: drop-shadow(0 0 20px var(--neon-yellow)) drop-shadow(0 0 35px var(--neon-pink)) !important;
+            transition: none !important;
+        }
+
+        @keyframes tardi-dance {
+            0% {
+                transform: scale(1) rotate(0deg) translateY(0);
+            }
+
+            20% {
+                transform: scale(1.25) rotate(20deg) translateY(-14px);
+            }
+
+            40% {
+                transform: scale(1.25) rotate(-20deg) translateY(-14px);
+            }
+
+            60% {
+                transform: scale(1.3) rotate(360deg) translateY(-18px);
+            }
+
+            80% {
+                transform: scale(1.2) rotate(380deg) translateY(-6px);
+            }
+
+            100% {
+                transform: scale(1) rotate(360deg) translateY(0);
+            }
+        }
+
+        /* Confeti neón */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1500;
+            display: none;
+        }
+
+        /* --- BOTONERA Y CONTROLES --- */
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-action {
+            background: #141432;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-action:active {
+            transform: scale(0.95);
+        }
+
+        .btn-hint {
+            border-color: var(--neon-yellow);
+            color: var(--neon-yellow);
+            background: rgba(255, 230, 0, 0.1);
+        }
+
+        .btn-undo-action {
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+            background: rgba(0, 242, 255, 0.1);
+        }
+
+        /* --- PAD DE NAVEGACIÓN DIRECCIONAL --- */
+        .dpad-container {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 10px;
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dpad-header {
+            font-size: 0.68rem;
+            color: #94a3b8;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .dpad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 42px);
+            gap: 6px;
+            width: 100%;
+            max-width: 260px;
+        }
+
+        .dpad-btn {
+            background: #181842;
+            border: 1px solid rgba(0, 242, 255, 0.35);
+            color: white;
+            font-size: 1.15rem;
+            font-weight: 800;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .dpad-btn:active {
+            transform: scale(0.92);
+            background: var(--neon-blue);
+            color: #000;
+        }
+
+        .dpad-btn-up {
+            grid-column: 2;
+            grid-row: 1;
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+        }
+
+        .dpad-btn-left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .dpad-btn-down {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .dpad-btn-right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        .keyboard-hint {
+            font-size: 0.65rem;
+            color: #64748b;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        /* --- CÓMO SE JUEGA (ESTILO REFERENCIA) --- */
+        .how-to-play-card {
+            background: rgba(10, 10, 30, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 10px 12px;
+            width: 100%;
+            font-size: 0.74rem;
+            color: #cbd5e1;
+        }
+
+        .how-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.72rem;
+            color: var(--neon-blue);
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 6px;
+        }
+
+        .how-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        .how-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 8px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .how-icon-group {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .how-badge {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #000;
+            border: 1.5px solid var(--neon-green);
+            color: var(--neon-green);
+            font-size: 0.6rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- MODAL DE VICTORIA --- */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 3, 15, 0.88);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            background: linear-gradient(180deg, #181842 0%, #0c0c24 100%);
+            border: 2px solid var(--neon-green);
+            padding: 26px 20px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 360px;
+            width: 100%;
+            box-shadow: 0 0 45px rgba(57, 255, 116, 0.35);
+            animation: modal-pop 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+
+        @keyframes modal-pop {
+            0% {
+                transform: scale(0.7);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .victory-stars {
+            font-size: 2.2rem;
+            letter-spacing: 6px;
+            margin: 10px 0;
+            filter: drop-shadow(0 0 12px var(--neon-yellow));
+            animation: star-bounce 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes star-bounce {
+            0% {
+                transform: scale(0.95);
+            }
+
+            100% {
+                transform: scale(1.08);
+            }
+        }
+
+        .victory-stats {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 10px;
+            margin: 12px 0 16px;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+
+        .stat-highlight {
+            color: var(--neon-blue);
+            font-weight: 700;
+        }
+
+        .btn-victory {
+            width: 100%;
+            background: linear-gradient(135deg, var(--neon-green), #059669);
+            color: #032b13;
+            font-weight: 800;
+            border: none;
+            font-size: 1.05rem;
+            padding: 14px;
+            border-radius: 14px;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(57, 255, 116, 0.4);
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-6px);
+            }
+        }
+
+        /* --- RESPONSIVIDAD (< 840px) --- */
+        @media (max-width: 840px) {
+            :root {
+                --board-size: min(92vw, min(calc(100vh - 410px), 440px));
+            }
+
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .panel-column {
+                width: 100%;
+                max-width: 460px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Canvas para confeti neón -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <header>
+        <div class="brand">
+            <div class="brand-icon">🔬</div>
+            <div>
+                <h1>TARDÍGRADO EXPLORER</h1>
+                <div class="subtitle">¡Conecta los puntos y recorre el laberinto!</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button id="sound-toggle" class="sound-btn" onclick="toggleAudio()"
+                title="Activar/Silenciar sonido">🔊</button>
+        </div>
+    </header>
+
+    <!-- Banner Toast para mensajes cómicos de estado -->
+    <div id="toast-banner" class="toast-banner"></div>
+
+    <div class="main-container">
+        <!-- COLUMNA IZQUIERDA: TABLERO GIGANTE CON RASTRO CONTINUO -->
+        <div class="board-column">
+            <div id="board-wrapper">
+                <div id="board">
+                    <!-- Capa SVG para el Rastro Continuo y Curvo -->
+                    <svg id="path-svg">
+                        <defs>
+                            <filter id="pathGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#22c55e"
+                                    flood-opacity="0.75" />
+                            </filter>
+                        </defs>
+                        <path id="ribbon-path" d="" fill="none" stroke="#22c55e" stroke-linecap="round"
+                            stroke-linejoin="round" filter="url(#pathGlow)" />
+                    </svg>
+
+                    <!-- Tardígrado Amistoso y Tierno en la Cabeza de la Cinta -->
+                    <div id="oso">
+                        <div class="tardi-svg-container" id="tardi-visual">
+                            <svg viewBox="0 0 100 100" width="100%" height="100%">
+                                <defs>
+                                    <radialGradient id="tardiSkin" cx="45%" cy="40%" r="55%">
+                                        <stop offset="0%" stop-color="#d8b4fe" />
+                                        <stop offset="60%" stop-color="#a855f7" />
+                                        <stop offset="100%" stop-color="#7e22ce" />
+                                    </radialGradient>
+                                    <linearGradient id="tardiBelly" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#fbcfe8" />
+                                        <stop offset="100%" stop-color="#f472b6" />
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Patitas laterales (4 pares regordetes) -->
+                                <g id="tardi-legs">
+                                    <!-- Par 4 (Trasero) -->
+                                    <ellipse cx="25" cy="74" rx="9" ry="6" fill="#9333ea" />
+                                    <ellipse cx="75" cy="74" rx="9" ry="6" fill="#9333ea" />
+                                    <circle cx="21" cy="77" r="2.5" fill="#fbcfe8" />
+                                    <circle cx="26" cy="79" r="2.5" fill="#fbcfe8" />
+                                    <circle cx="79" cy="77" r="2.5" fill="#fbcfe8" />
+                                    <circle cx="74" cy="79" r="2.5" fill="#fbcfe8" />
+
+                                    <!-- Par 3 -->
+                                    <ellipse cx="20" cy="58" rx="8.5" ry="5.5" fill="#a855f7" />
+                                    <ellipse cx="80" cy="58" rx="8.5" ry="5.5" fill="#a855f7" />
+                                    <circle cx="16" cy="61" r="2.2" fill="#fbcfe8" />
+                                    <circle cx="84" cy="61" r="2.2" fill="#fbcfe8" />
+
+                                    <!-- Par 2 -->
+                                    <ellipse cx="20" cy="42" rx="8.5" ry="5.5" fill="#a855f7" />
+                                    <ellipse cx="80" cy="42" rx="8.5" ry="5.5" fill="#a855f7" />
+                                    <circle cx="16" cy="45" r="2.2" fill="#fbcfe8" />
+                                    <circle cx="84" cy="45" r="2.2" fill="#fbcfe8" />
+
+                                    <!-- Par 1 (Delantero) -->
+                                    <ellipse cx="24" cy="27" rx="8" ry="5" fill="#9333ea" />
+                                    <ellipse cx="76" cy="27" rx="8" ry="5" fill="#9333ea" />
+                                    <circle cx="20" cy="28" r="2" fill="#fbcfe8" />
+                                    <circle cx="80" cy="28" r="2" fill="#fbcfe8" />
+                                </g>
+
+                                <!-- Cuerpo segmentado / rollitos tiernos -->
+                                <ellipse cx="50" cy="70" rx="27" ry="18" fill="url(#tardiSkin)" />
+                                <ellipse cx="50" cy="54" rx="29" ry="17" fill="url(#tardiSkin)" />
+                                <ellipse cx="50" cy="38" rx="28" ry="16" fill="url(#tardiSkin)" />
+                                <ellipse cx="50" cy="52" rx="19" ry="17" fill="url(#tardiBelly)" opacity="0.8" />
+
+                                <!-- Cabeza amistosa -->
+                                <ellipse cx="50" cy="23" rx="24" ry="17" fill="url(#tardiSkin)" />
+
+                                <!-- Hocico / Trompita -->
+                                <ellipse cx="50" cy="18" rx="9" ry="7" fill="#f472b6" />
+                                <ellipse cx="50" cy="16.5" rx="5" ry="3.5" fill="#be185d" />
+
+                                <!-- Boca Normal: Sonrisa amigable -->
+                                <path id="normal-mouth" d="M 45 23 Q 50 28 55 23" stroke="#831843" stroke-width="2"
+                                    stroke-linecap="round" fill="none" />
+
+                                <!-- Boca Mareada: Boquita sorprendida -->
+                                <path id="dizzy-mouth" class="dizzy-feature" style="display: none;"
+                                    d="M 44 24 Q 47 21 50 24 Q 53 27 56 24" stroke="#831843" stroke-width="2"
+                                    stroke-linecap="round" fill="none" />
+
+                                <!-- Mejillas sonrosadas (Blush) -->
+                                <circle cx="36" cy="24" r="4.5" fill="#ff2a8d" opacity="0.6" />
+                                <circle cx="64" cy="24" r="4.5" fill="#ff2a8d" opacity="0.6" />
+
+                                <!-- OJOS NORMALES -->
+                                <g id="normal-eyes">
+                                    <circle cx="38" cy="18" r="5" fill="#0f172a" />
+                                    <circle cx="37" cy="16.5" r="2" fill="#ffffff" />
+                                    <circle cx="40" cy="19.5" r="0.9" fill="#ffffff" />
+                                    <circle cx="62" cy="18" r="5" fill="#0f172a" />
+                                    <circle cx="61" cy="16.5" r="2" fill="#ffffff" />
+                                    <circle cx="64" cy="19.5" r="0.9" fill="#ffffff" />
+                                </g>
+
+                                <!-- OJOS MAREADOS -->
+                                <g id="dizzy-eyes" class="dizzy-feature" style="display: none;">
+                                    <path
+                                        d="M 38 18 m -3.5,0 a 3.5,3.5 0 1,0 7,0 a 2.5,2.5 0 1,0 -5,0 a 1.5,1.5 0 1,0 3,0 a 0.5,0.5 0 1,0 -1,0"
+                                        fill="none" stroke="#ffe600" stroke-width="1.6" stroke-linecap="round" />
+                                    <path
+                                        d="M 62 18 m -3.5,0 a 3.5,3.5 0 1,0 7,0 a 2.5,2.5 0 1,0 -5,0 a 1.5,1.5 0 1,0 3,0 a 0.5,0.5 0 1,0 -1,0"
+                                        fill="none" stroke="#ffe600" stroke-width="1.6" stroke-linecap="round" />
+                                </g>
+
+                                <!-- ESTRELLITAS ORBITANDO -->
+                                <g id="dizzy-stars-group" class="dizzy-feature dizzy-orbit" style="display: none;">
+                                    <text x="46" y="8" font-size="10" fill="#ffe600" text-anchor="middle"
+                                        filter="drop-shadow(0 0 4px #ffe600)">⭐</text>
+                                    <text x="32" y="16" font-size="8" fill="#00f2ff" text-anchor="middle"
+                                        filter="drop-shadow(0 0 3px #00f2ff)">💫</text>
+                                    <text x="68" y="16" font-size="8" fill="#ff2a8d" text-anchor="middle"
+                                        filter="drop-shadow(0 0 3px #ff2a8d)">✨</text>
+                                </g>
+
+                                <!-- Antenitas -->
+                                <circle cx="42" cy="7" r="1.5" fill="#f472b6" />
+                                <circle cx="58" cy="7" r="1.5" fill="#f472b6" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: PANEL DE CONTROL Y SECUENCIA -->
+        <div class="panel-column">
+            <!-- PESTAÑAS DE MODOS -->
+            <div class="mode-tabs">
+                <button class="mode-tab" id="tab-explorer" onclick="setMode('explorer')">
+                    <span class="mode-tab-icon">🧭</span>
+                    <span>Explorador</span>
+                </button>
+                <button class="mode-tab" id="tab-programmer" onclick="setMode('programmer')">
+                    <span class="mode-tab-icon">💻</span>
+                    <span>Programador</span>
+                </button>
+                <button class="mode-tab active" id="tab-sequences" onclick="setMode('sequences')">
+                    <span class="mode-tab-icon">🔢</span>
+                    <span>Conecta 1-N</span>
+                </button>
+            </div>
+
+            <!-- HUD DE SECUENCIA NUMÉRICA -->
+            <div class="sequence-hud" id="sequence-hud">
+                <div class="sequence-hud-header">
+                    <span>SECUENCIA DE PUNTOS</span>
+                    <span id="seq-progress-text">Objetivo: [ 2 ]</span>
+                </div>
+                <div class="sequence-dots" id="sequence-dots-container"></div>
+            </div>
+
+            <!-- HUD DE PROGRAMADOR -->
+            <div class="programmer-hud" id="programmer-hud" style="display: none;">
+                <div class="programmer-hud-header">
+                    <span>SECUENCIA DE CÓDIGO</span>
+                    <span id="prog-steps-count">0 comandos</span>
+                </div>
+                <div class="programmer-queue" id="programmer-queue-container">
+                    <span class="prog-empty-hint">Usa los botones o flechas para programar...</span>
+                </div>
+                <div class="programmer-actions">
+                    <button class="btn-prog btn-prog-run" onclick="executeProgrammerSequence()">
+                        <span>▶</span>
+                        <span>EJECUTAR</span>
+                    </button>
+                    <button class="btn-prog btn-prog-undo" onclick="undoProgrammerCommand()">
+                        <span>↩</span>
+                        <span>Borrar</span>
+                    </button>
+                    <button class="btn-prog btn-prog-clear" onclick="clearProgrammerSequence()">
+                        <span>🗑️</span>
+                        <span>Limpiar</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="config-menu">
+                <div class="select-group">
+                    <label>Nivel / Desafío</label>
+                    <select id="level-select" onchange="startNewGame()"></select>
+                </div>
+                <div class="select-group">
+                    <label>Tamaño Laberinto</label>
+                    <select id="size-select" onchange="startNewGame()">
+                        <option value="5">5 x 5 (Rápido)</option>
+                        <option value="6" selected>6 x 6 (Ideal)</option>
+                        <option value="7">7 x 7 (Medio)</option>
+                        <option value="8">8 x 8 (Avanzado)</option>
+                        <option value="9">9 x 9 (Experto)</option>
+                        <option value="10">10 x 10 (Maestro)</option>
+                    </select>
+                </div>
+
+                <div class="stats-bar">
+                    <span id="stats-route-label">Puntos Conectados: <strong id="optimal-steps"
+                            class="stat-highlight">1 / 6</strong></span>
+                    <span>Estrellas: <span id="current-level-stars" class="star-badge">☆☆☆</span></span>
+                </div>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN RÁPIDA: DESHACER Y PISTA -->
+            <div class="action-row">
+                <button class="btn-action btn-undo-action" onclick="undoStep()">
+                    <span>↩</span>
+                    <span>Deshacer</span>
+                </button>
+                <button class="btn-action btn-hint" onclick="getHint()">
+                    <span>💡</span>
+                    <span>Pista</span>
+                </button>
+            </div>
+
+            <!-- PAD DE NAVEGACIÓN DIRECCIONAL (O USAR FLECHAS DEL TECLADO) -->
+            <div class="dpad-container">
+                <div class="dpad-header">
+                    <span>CONTROLES DE MOVIMIENTO</span>
+                    <span style="color: var(--neon-green); font-size: 0.65rem;">⌨ Teclado Activo</span>
+                </div>
+                <div class="dpad-grid">
+                    <button class="dpad-btn dpad-btn-up" onclick="handleMoveDirection(0, -1, 0)" title="Arriba">↑</button>
+                    <button class="dpad-btn dpad-btn-left" onclick="handleMoveDirection(-1, 0, 270)" title="Izquierda">←</button>
+                    <button class="dpad-btn dpad-btn-down" onclick="handleMoveDirection(0, 1, 180)" title="Abajo">↓</button>
+                    <button class="dpad-btn dpad-btn-right" onclick="handleMoveDirection(1, 0, 90)" title="Derecha">→</button>
+                </div>
+                <div class="keyboard-hint">También puedes usar las flechas del teclado <strong>↑ ↓ ← →</strong> o <strong>WASD</strong></div>
+            </div>
+
+            <!-- GUÍA CÓMO SE JUEGA (ESTILO REFERENCIA) -->
+            <div class="how-to-play-card">
+                <div class="how-header" onclick="toggleHowToPlay()">
+                    <span>¿CÓMO SE JUEGA?</span>
+                    <span id="how-chevron">▼</span>
+                </div>
+                <div class="how-grid" id="how-grid">
+                    <div class="how-item">
+                        <div class="how-icon-group">
+                            <div class="how-badge">1</div>
+                            <div class="how-badge">2</div>
+                            <div class="how-badge">3</div>
+                        </div>
+                        <span style="font-weight: 700; color: #f1f5f9;">Conecta en Orden</span>
+                        <span style="font-size: 0.62rem; color: #94a3b8;">Visita los puntos del 1 al N secuencialmente.</span>
+                    </div>
+                    <div class="how-item">
+                        <div style="font-size: 1.1rem; color: var(--neon-green);">🟩✦</div>
+                        <span style="font-weight: 700; color: #f1f5f9;">Camino Continuo</span>
+                        <span style="font-size: 0.62rem; color: #94a3b8;">Traza tu cinta sin cruzar sobre tu rastro.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Victoria -->
+    <div class="modal" id="win-modal">
+        <div class="modal-content">
+            <h2
+                style="color: var(--neon-green); font-family: 'Orbitron'; font-size: 1.3rem; margin: 0; text-shadow: 0 0 10px var(--neon-green);">
+                ¡MISIÓN LOGRADA!
+            </h2>
+            <div class="victory-stars" id="victory-stars-display">⭐⭐⭐</div>
+            <p id="victory-msg" style="font-size: 0.9rem; color: #f1f5f9; margin: 6px 0;">
+                ¡El oso de agua ha conectado todos los puntos con una ruta perfecta!
+            </p>
+            <div class="victory-stats">
+                <div>Casillas recorridas: <strong id="used-steps-count" class="stat-highlight">0</strong></div>
+                <div>Puntos conectados: <strong id="best-steps-count" class="stat-highlight">0</strong></div>
+            </div>
+            <button class="btn-victory" onclick="levelUp()">SIGUIENTE DESAFÍO ➡</button>
+        </div>
+    </div>
+
+    <script>
+        // --- ESTADO GLOBAL ---
+        let currentMode = 'sequences'; // 'sequences' | 'explorer' | 'programmer'
+        let gridSize = 6;
+        let map = [];
+        let startPos = { x: 0, y: 0 };
+        let goalPos = { x: 5, y: 5 };
+        let currentPos = { x: 0, y: 0 };
+        let currentDir = 90;
+        let isExecuting = false;
+        let isDizzy = false;
+        let confettiInterval = null;
+        let audioEnabled = true;
+        let audioCtx = null;
+        let toastTimeout = null;
+
+        // --- ESTADO PARA RASTRO Y SECUENCIA (MODO REFERENCIA) ---
+        let pathHistory = []; // Array de posiciones [{x, y, dir}]
+        let sequencePoints = []; // [{num: 1, x, y}, {num: 2, x, y}, ...]
+        let currentTargetIndex = 1;
+        let fullSolutionPath = []; // El camino continuo 100% garantizado generado para este puzzle
+
+        // --- ESTADO MODO PROGRAMADOR ---
+        let programmerQueue = []; // Array de comandos programados [{dx, dy, targetAngle, icon}]
+
+        // --- SISTEMA DE SONIDO SINTETIZADO (Web Audio API) ---
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!audioEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+
+                if (type === 'step') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(520, now + 0.08);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                } else if (type === 'checkpoint') {
+                    const freqs = [523.25, 659.25, 783.99, 1046.50];
+                    freqs.forEach((f, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        const nTime = now + (idx * 0.07);
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(f, nTime);
+                        gain.gain.setValueAtTime(0.2, nTime);
+                        gain.gain.exponentialRampToValueAtTime(0.005, nTime + 0.25);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(nTime);
+                        osc.stop(nTime + 0.25);
+                    });
+                } else if (type === 'hint') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(587.33, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'explosion') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.exponentialRampToValueAtTime(35, now + 0.25);
+                    gain.gain.setValueAtTime(0.35, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.28);
+                } else if (type === 'dizzy') {
+                    const notes = [650, 480, 720, 500, 800, 520];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        const nTime = now + 0.15 + (idx * 0.12);
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, nTime);
+                        osc.frequency.exponentialRampToValueAtTime(freq - 60, nTime + 0.1);
+                        gain.gain.setValueAtTime(0.12, nTime);
+                        gain.gain.exponentialRampToValueAtTime(0.005, nTime + 0.11);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(nTime);
+                        osc.stop(nTime + 0.11);
+                    });
+                } else if (type === 'victory') {
+                    const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        const noteTime = now + (idx * 0.1);
+                        osc.type = idx === notes.length - 1 ? 'triangle' : 'sine';
+                        osc.frequency.setValueAtTime(freq, noteTime);
+                        gain.gain.setValueAtTime(0.2, noteTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, noteTime + (idx === notes.length - 1 ? 0.6 : 0.15));
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(noteTime);
+                        osc.stop(noteTime + (idx === notes.length - 1 ? 0.6 : 0.15));
+                    });
+                }
+            } catch (e) {
+                console.warn("Audio error:", e);
+            }
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('sound-toggle').innerText = audioEnabled ? '🔊' : '🔇';
+            if (audioEnabled) {
+                getAudioContext();
+                playSound('step');
+            }
+        }
+
+        function showToast(text, duration = 2400) {
+            const toast = document.getElementById('toast-banner');
+            toast.innerHTML = text;
+            toast.style.display = 'block';
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, duration);
+        }
+
+        // --- SISTEMA DE PROGRESO (localStorage) ---
+        function getProgressKey() {
+            return `tardigrado_progress_${currentMode}_v2`;
+        }
+
+        function getSavedStars(level) {
+            try {
+                const saved = JSON.parse(localStorage.getItem(getProgressKey()) || '{}');
+                return saved[level] || 0;
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        function saveStars(level, stars) {
+            try {
+                const key = getProgressKey();
+                const saved = JSON.parse(localStorage.getItem(key) || '{}');
+                if (!saved[level] || stars > saved[level]) {
+                    saved[level] = stars;
+                    localStorage.setItem(key, JSON.stringify(saved));
+                }
+            } catch (e) {
+                console.warn("Could not save progress:", e);
+            }
+            refreshLevelSelectLabels();
+        }
+
+        function refreshLevelSelectLabels() {
+            const currentVal = levelSelect.value;
+            levelSelect.innerHTML = '';
+            for (let i = 1; i <= 20; i++) {
+                const stars = getSavedStars(i);
+                let starText = '';
+                if (stars === 3) starText = ' ⭐⭐⭐';
+                else if (stars === 2) starText = ' ⭐⭐';
+                else if (stars === 1) starText = ' ⭐';
+
+                let opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = `Desafío ${i}${starText}`;
+                levelSelect.appendChild(opt);
+            }
+            if (currentVal) levelSelect.value = currentVal;
+            updateHeaderStars();
+        }
+
+        function updateHeaderStars() {
+            const level = parseInt(levelSelect.value) || 1;
+            const stars = getSavedStars(level);
+            let display = '☆☆☆';
+            if (stars === 3) display = '⭐⭐⭐';
+            else if (stars === 2) display = '⭐⭐☆';
+            else if (stars === 1) display = '⭐☆☆';
+            document.getElementById('current-level-stars').innerText = display;
+        }
+
+        // --- GESTIÓN DE MODOS ---
+        function setMode(mode) {
+            if (isExecuting || oso.classList.contains('dancing')) return;
+            currentMode = mode;
+            playSound('step');
+
+            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${mode}`).classList.add('active');
+
+            const seqHud = document.getElementById('sequence-hud');
+            const progHud = document.getElementById('programmer-hud');
+
+            if (mode === 'sequences') {
+                if (seqHud) seqHud.style.display = 'block';
+                if (progHud) progHud.style.display = 'none';
+            } else if (mode === 'programmer') {
+                if (seqHud) seqHud.style.display = 'none';
+                if (progHud) progHud.style.display = 'block';
+                clearProgrammerSequence();
+            } else {
+                if (seqHud) seqHud.style.display = 'none';
+                if (progHud) progHud.style.display = 'none';
+            }
+
+            refreshLevelSelectLabels();
+            startNewGame();
+        }
+
+        // --- INICIALIZACIÓN Y GENERACIÓN PROCEDIMENTAL ---
+        const levelSelect = document.getElementById('level-select');
+        refreshLevelSelectLabels();
+
+        function startNewGame() {
+            stopVictoryEffects();
+            clearDizzyState();
+            gridSize = parseInt(document.getElementById('size-select').value);
+            const level = parseInt(levelSelect.value);
+
+            document.documentElement.style.setProperty('--grid-size', gridSize);
+
+            if (currentMode === 'programmer') {
+                programmerQueue = [];
+                renderProgrammerHUD();
+            }
+
+            if (currentMode === 'sequences') {
+                generateSolvableSequenceMaze(gridSize, level);
+            } else {
+                generateStandardMaze(gridSize, level);
+            }
+
+            drawBoard();
+            resetGameTracking();
+            updateHeaderStars();
+            requestAnimationFrame(updateOso);
+        }
+
+        // ALGORITMO DE GENERACIÓN 100% GARANTIZADO DE SOLUCIÓN (PATH-FIRST GENERATION)
+        function generateSolvableSequenceMaze(size, level) {
+            let attempts = 0;
+            let bestPath = [];
+            // Queremos un camino largo y sinuoso que recorra entre el 50% y el 85% de la cuadrícula
+            const targetMinLength = Math.max(10, Math.floor(size * size * (0.45 + Math.min(0.35, level * 0.015))));
+
+            while (attempts < 250) {
+                attempts++;
+                // Elegir una esquina de inicio
+                let corners = [
+                    { x: 0, y: 0 },
+                    { x: size - 1, y: 0 },
+                    { x: 0, y: size - 1 },
+                    { x: size - 1, y: size - 1 }
+                ];
+                let start = corners[Math.floor(Math.random() * corners.length)];
+
+                let visited = Array(size).fill().map(() => Array(size).fill(false));
+                let path = [start];
+                visited[start.y][start.x] = true;
+
+                let cur = { ...start };
+
+                while (true) {
+                    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    let neighbors = [];
+
+                    for (let [dx, dy] of dirs) {
+                        let nx = cur.x + dx, ny = cur.y + dy;
+                        if (nx >= 0 && nx < size && ny >= 0 && ny < size && !visited[ny][nx]) {
+                            // Contar salidas libres para la heurística de Warnsdorff
+                            let freeCount = 0;
+                            for (let [ddx, ddy] of dirs) {
+                                let nnx = nx + ddx, nny = ny + ddy;
+                                if (nnx >= 0 && nnx < size && nny >= 0 && nny < size && !visited[nny][nnx]) {
+                                    freeCount++;
+                                }
+                            }
+                            neighbors.push({ x: nx, y: ny, freeCount });
+                        }
+                    }
+
+                    if (neighbors.length === 0) break;
+
+                    // Heurística de Warnsdorff con aleatoriedad controlada para serpentear de forma densa
+                    neighbors.sort((a, b) => (a.freeCount - b.freeCount) + (Math.random() * 1.8 - 0.9));
+                    let nextCell = neighbors[0];
+                    visited[nextCell.y][nextCell.x] = true;
+                    path.push({ x: nextCell.x, y: nextCell.y });
+                    cur = nextCell;
+                }
+
+                if (path.length > bestPath.length) {
+                    bestPath = path;
+                }
+
+                if (bestPath.length >= targetMinLength) {
+                    break;
+                }
+            }
+
+            // Construir el mapa: todo lo que NO esté en bestPath se convierte en obstáculo/pared
+            map = Array(size).fill().map(() => Array(size).fill(1));
+            bestPath.forEach(p => {
+                map[p.y][p.x] = 0; // Transitable
+            });
+
+            // Guardar el camino solución 100% garantizado
+            fullSolutionPath = bestPath;
+            startPos = { x: bestPath[0].x, y: bestPath[0].y };
+            currentPos = { ...startPos };
+
+            // Orientar la mirada inicial del tardígrado hacia el siguiente paso
+            if (bestPath.length > 1) {
+                let dx = bestPath[1].x - bestPath[0].x;
+                let dy = bestPath[1].y - bestPath[0].y;
+                if (dx === 1) currentDir = 90;
+                else if (dx === -1) currentDir = 270;
+                else if (dy === 1) currentDir = 180;
+                else if (dy === -1) currentDir = 0;
+            }
+
+            // Colocar los números 1..N a lo largo del camino solución generado
+            const numCheckpoints = Math.min(8, Math.max(4, 3 + Math.floor(bestPath.length / 5)));
+            sequencePoints = [];
+
+            for (let i = 0; i < numCheckpoints; i++) {
+                let pathIdx;
+                if (i === 0) {
+                    pathIdx = 0;
+                } else if (i === numCheckpoints - 1) {
+                    pathIdx = bestPath.length - 1;
+                } else {
+                    pathIdx = Math.round((i / (numCheckpoints - 1)) * (bestPath.length - 1));
+                }
+
+                let pt = bestPath[pathIdx];
+                sequencePoints.push({ num: i + 1, x: pt.x, y: pt.y, pathIndex: pathIdx });
+            }
+
+            currentTargetIndex = 1;
+            renderSequenceHUD();
+            showToast(`🔢 Conecta los puntos del 1 al ${sequencePoints.length} en orden. ¡100% Solucionable!`, 2600);
+        }
+
+        // Generador para modos explorador / programador
+        function generateStandardMaze(size, level) {
+            let reachable = false;
+            let attempts = 0;
+            const obstacleDensity = Math.min(0.34, 0.09 + (level * 0.012));
+
+            while (!reachable && attempts < 150) {
+                map = Array(size).fill().map(() => Array(size).fill(0));
+                startPos = { x: 0, y: 0 };
+                goalPos = { x: size - 1, y: size - 1 };
+
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if ((r === startPos.y && c === startPos.x) || (r === goalPos.y && c === goalPos.x)) continue;
+                        if (Math.random() < obstacleDensity) map[r][c] = 1;
+                    }
+                }
+
+                const result = checkPathBFS(size, startPos, goalPos, map);
+                if (result.found) {
+                    reachable = true;
+                }
+                attempts++;
+            }
+            map[goalPos.y][goalPos.x] = 2;
+        }
+
+        function renderSequenceHUD() {
+            const container = document.getElementById('sequence-dots-container');
+            const progress = document.getElementById('seq-progress-text');
+            const stats = document.getElementById('optimal-steps');
+            if (!container || !progress) return;
+
+            const nextTarget = sequencePoints[currentTargetIndex];
+            if (nextTarget) {
+                progress.innerText = `Siguiente: [ ${nextTarget.num} ]`;
+            } else {
+                progress.innerText = `¡Todos Conectados! ⭐`;
+            }
+
+            if (stats) stats.innerText = `${currentTargetIndex} / ${sequencePoints.length}`;
+
+            container.innerHTML = sequencePoints.map((pt, idx) => {
+                let statusClass = '';
+                if (idx < currentTargetIndex) statusClass = 'completed';
+                else if (idx === currentTargetIndex) statusClass = 'active-target';
+
+                const arrowHtml = (idx < sequencePoints.length - 1) ? `<span class="seq-arrow">➔</span>` : '';
+                return `<div class="seq-dot ${statusClass}">${pt.num}</div>${arrowHtml}`;
+            }).join('');
+        }
+
+        function checkPathBFS(size, start, end, grid) {
+            let queue = [{ x: start.x, y: start.y, dist: 0 }];
+            let visited = new Set([`${start.x},${start.y}`]);
+
+            while (queue.length > 0) {
+                let current = queue.shift();
+                if (current.x === end.x && current.y === end.y) {
+                    return { found: true, dist: current.dist };
+                }
+
+                const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                for (let [dx, dy] of neighbors) {
+                    let nx = current.x + dx, ny = current.y + dy;
+                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && grid[ny][nx] !== 1 && !visited.has(`${nx},${ny}`)) {
+                        visited.add(`${nx},${ny}`);
+                        queue.push({ x: nx, y: ny, dist: current.dist + 1 });
+                    }
+                }
+            }
+            return { found: false, dist: 0 };
+        }
+
+        function drawBoard() {
+            const board = document.getElementById('board');
+            board.querySelectorAll('.cell, .explosion-particle').forEach(c => c.remove());
+
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    const div = document.createElement('div');
+                    div.className = 'cell';
+                    div.id = `cell-${c}-${r}`;
+
+                    if (map[r][c] === 1) {
+                        div.classList.add('wall');
+                    }
+
+                    if (currentMode !== 'sequences' && map[r][c] === 2) {
+                        div.classList.add('goal');
+                        div.innerHTML = '<span class="goal-icon">⭐</span>';
+                    }
+
+                    // Nodos numéricos en Modo Secuencias
+                    if (currentMode === 'sequences') {
+                        const ptIndex = sequencePoints.findIndex(p => p.x === c && p.y === r);
+                        if (ptIndex !== -1) {
+                            const node = sequencePoints[ptIndex];
+                            let statusClass = '';
+                            if (ptIndex < currentTargetIndex) statusClass = 'completed';
+                            else if (ptIndex === currentTargetIndex) statusClass = 'active-target';
+
+                            div.innerHTML = `<div class="number-node ${statusClass}" id="num-node-${node.num}">${node.num}</div>`;
+                        }
+                    }
+
+                    board.appendChild(div);
+                }
+            }
+            updatePathRibbon();
+            updateOso();
+        }
+
+        function updateNumberNodeStyles() {
+            if (currentMode !== 'sequences') return;
+            sequencePoints.forEach((pt, idx) => {
+                const el = document.getElementById(`num-node-${pt.num}`);
+                if (!el) return;
+                el.classList.remove('completed', 'active-target');
+                if (idx < currentTargetIndex) el.classList.add('completed');
+                else if (idx === currentTargetIndex) el.classList.add('active-target');
+            });
+        }
+
+        function resetGameTracking() {
+            currentPos = { ...startPos };
+            pathHistory = [{ x: startPos.x, y: startPos.y, dir: currentDir }];
+            currentTargetIndex = 1;
+            clearDizzyState();
+            if (currentMode === 'sequences') renderSequenceHUD();
+            updateNumberNodeStyles();
+            updatePathRibbon();
+            updateOso();
+        }
+
+        // --- RENDERIZADO DEL RASTRO CONTINUO Y GRUESO (SVG RIBBON) ---
+        function updatePathRibbon() {
+            const pathSvg = document.getElementById('ribbon-path');
+            const board = document.getElementById('board');
+            if (!pathSvg || !board) return;
+
+            const boardSize = board.clientWidth;
+            if (boardSize <= 0 || pathHistory.length <= 1) {
+                pathSvg.setAttribute('d', '');
+                return;
+            }
+
+            const cellSize = boardSize / gridSize;
+            const strokeWidth = cellSize * 0.58;
+
+            pathSvg.setAttribute('stroke-width', strokeWidth);
+
+            let d = '';
+            pathHistory.forEach((p, idx) => {
+                const cx = p.x * cellSize + cellSize / 2;
+                const cy = p.y * cellSize + cellSize / 2;
+                if (idx === 0) {
+                    d += `M ${cx} ${cy}`;
+                } else {
+                    d += ` L ${cx} ${cy}`;
+                }
+            });
+
+            pathSvg.setAttribute('d', d);
+        }
+
+        function updateOso() {
+            const oso = document.getElementById('oso');
+            const board = document.getElementById('board');
+            if (!board || !oso) return;
+
+            const boardSize = board.clientWidth;
+            if (boardSize <= 0) return;
+
+            const cellSize = boardSize / gridSize;
+            const osoSize = cellSize * 0.82;
+
+            oso.style.width = osoSize + 'px';
+            oso.style.height = osoSize + 'px';
+
+            const offset = (cellSize - osoSize) / 2;
+            const left = currentPos.x * cellSize + offset;
+            const top = currentPos.y * cellSize + offset;
+
+            oso.style.left = left + 'px';
+            oso.style.top = top + 'px';
+            oso.style.transform = `rotate(${currentDir}deg)`;
+        }
+
+        function animateWaddle() {
+            const visual = document.getElementById('tardi-visual');
+            visual.classList.remove('tardi-waddling');
+            void visual.offsetWidth;
+            visual.classList.add('tardi-waddling');
+        }
+
+        // --- EFECTO DE EXPLOSIÓN Y MAREO ---
+        function triggerCollisionEffect(targetX, targetY, isTrail = false) {
+            playSound('explosion');
+            playSound('dizzy');
+
+            createExplosionAt(targetX, targetY);
+
+            const board = document.getElementById('board');
+            board.classList.remove('board-shake');
+            void board.offsetWidth;
+            board.classList.add('board-shake');
+            board.style.borderColor = 'var(--neon-pink)';
+            board.style.boxShadow = '0 0 30px var(--neon-pink)';
+
+            setTimeout(() => {
+                board.classList.remove('board-shake');
+                board.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                board.style.boxShadow = 'none';
+            }, 450);
+
+            const oso = document.getElementById('oso');
+            oso.classList.add('is-dizzy');
+            isDizzy = true;
+
+            const msg = isTrail
+                ? "💥 ¡PUM! ¡No puedes cruzar sobre tu propio camino! Sale ileso pero mareado 💫"
+                : "💥 ¡PUM! ¡El tardígrado es indestructible! Sale ileso pero quedó mareado 💫";
+
+            showToast(msg, 2400);
+
+            setTimeout(() => {
+                clearDizzyState();
+            }, 1600);
+        }
+
+        function createExplosionAt(targetX, targetY) {
+            const board = document.getElementById('board');
+            const cellSize = board.clientWidth / gridSize;
+
+            const posX = Math.max(0, Math.min(gridSize - 1, targetX)) * cellSize + (cellSize / 2);
+            const posY = Math.max(0, Math.min(gridSize - 1, targetY)) * cellSize + (cellSize / 2);
+
+            const exp = document.createElement('div');
+            exp.className = 'explosion-particle';
+            exp.style.left = posX + 'px';
+            exp.style.top = posY + 'px';
+
+            exp.innerHTML = `
+                <div class="exp-shockwave"></div>
+                <div class="exp-emoji">💥</div>
+            `;
+
+            board.appendChild(exp);
+
+            setTimeout(() => {
+                exp.remove();
+            }, 700);
+        }
+
+        function clearDizzyState() {
+            const oso = document.getElementById('oso');
+            if (oso) oso.classList.remove('is-dizzy');
+            isDizzy = false;
+        }
+
+        // --- MODO PROGRAMADOR: GESTIÓN DE COLA DE COMANDOS ---
+        function renderProgrammerHUD() {
+            const container = document.getElementById('programmer-queue-container');
+            const countLabel = document.getElementById('prog-steps-count');
+            if (!container || !countLabel) return;
+
+            countLabel.innerText = `${programmerQueue.length} comandos`;
+
+            if (programmerQueue.length === 0) {
+                container.innerHTML = `<span class="prog-empty-hint">Usa los botones o flechas para programar...</span>`;
+                return;
+            }
+
+            container.innerHTML = programmerQueue.map(cmd => {
+                return `<div class="prog-cmd-badge">${cmd.icon}</div>`;
+            }).join('');
+
+            container.scrollLeft = container.scrollWidth;
+        }
+
+        function undoProgrammerCommand() {
+            if (isExecuting || programmerQueue.length === 0) return;
+            programmerQueue.pop();
+            playSound('step');
+            renderProgrammerHUD();
+        }
+
+        function clearProgrammerSequence() {
+            if (isExecuting) return;
+            programmerQueue = [];
+            renderProgrammerHUD();
+            resetGameTracking();
+        }
+
+        function executeProgrammerSequence() {
+            if (isExecuting || oso.classList.contains('dancing')) return;
+            if (programmerQueue.length === 0) {
+                showToast("⚠️ Programa una secuencia de pasos usando las flechas primero.", 2200);
+                return;
+            }
+
+            resetGameTracking();
+            isExecuting = true;
+
+            let stepIdx = 0;
+            showToast("🚀 Ejecutando programa...", 1400);
+
+            const interval = setInterval(() => {
+                if (stepIdx >= programmerQueue.length) {
+                    clearInterval(interval);
+                    isExecuting = false;
+
+                    const isGoalReached = (currentMode === 'sequences')
+                        ? (currentTargetIndex >= sequencePoints.length)
+                        : (currentPos.x === goalPos.x && currentPos.y === goalPos.y);
+
+                    if (!isGoalReached && !isDizzy) {
+                        showToast("▶ Secuencia completada. ¡Ajusta tus comandos para llegar a la meta!", 2500);
+                    }
+                    return;
+                }
+
+                const cmd = programmerQueue[stepIdx];
+                stepIdx++;
+
+                executeSingleStep(cmd.dx, cmd.dy, cmd.targetAngle);
+
+                if (isDizzy) {
+                    clearInterval(interval);
+                    isExecuting = false;
+                }
+            }, 300);
+        }
+
+        // --- MOVIMIENTO DIRECCIONAL Y REGLAS DE CONEXIÓN ---
+        function handleMoveDirection(dx, dy, targetAngle) {
+            if (isExecuting || oso.classList.contains('dancing')) return;
+
+            // En Modo Programador: capturar secuencia sin mover al tardígrado ni dar feedback de error
+            if (currentMode === 'programmer') {
+                let icon = '↑';
+                if (targetAngle === 90) icon = '→';
+                else if (targetAngle === 180) icon = '↓';
+                else if (targetAngle === 270) icon = '←';
+
+                programmerQueue.push({ dx, dy, targetAngle, icon });
+                playSound('step');
+                renderProgrammerHUD();
+                return;
+            }
+
+            // Modo Explorador y Modo Conecta 1-N (Ejecución inmediata)
+            executeSingleStep(dx, dy, targetAngle);
+        }
+
+        function executeSingleStep(dx, dy, targetAngle) {
+            const nx = currentPos.x + dx;
+            const ny = currentPos.y + dy;
+            currentDir = targetAngle;
+
+            // 1. Límites del mapa y paredes
+            if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize || map[ny][nx] === 1) {
+                updateOso();
+                triggerCollisionEffect(nx, ny, false);
+                return;
+            }
+
+            // 2. Regla de Rastro Único (No cruzar sobre casillas ya ocupadas por el camino)
+            if (pathHistory.length >= 2) {
+                const prev = pathHistory[pathHistory.length - 2];
+                if (prev.x === nx && prev.y === ny) {
+                    undoStep();
+                    return;
+                }
+            }
+
+            const isAlreadyVisited = pathHistory.some(p => p.x === nx && p.y === ny);
+            if (isAlreadyVisited) {
+                updateOso();
+                triggerCollisionEffect(nx, ny, true);
+                return;
+            }
+
+            // 3. En Modo Secuencias: Validar si la casilla es un punto numérico
+            if (currentMode === 'sequences') {
+                const ptIndex = sequencePoints.findIndex(p => p.x === nx && p.y === ny);
+                if (ptIndex !== -1) {
+                    if (ptIndex === currentTargetIndex) {
+                        // ¡Correcto! Es el siguiente número de la secuencia
+                        currentPos = { x: nx, y: ny };
+                        pathHistory.push({ x: nx, y: ny, dir: currentDir });
+                        currentTargetIndex++;
+
+                        playSound('checkpoint');
+                        animateWaddle();
+                        updateOso();
+                        updatePathRibbon();
+                        renderSequenceHUD();
+                        updateNumberNodeStyles();
+
+                        // Verificar si se completaron todos los puntos
+                        if (currentTargetIndex >= sequencePoints.length) {
+                            setTimeout(triggerVictory, 300);
+                        }
+                        return;
+                    } else if (ptIndex > currentTargetIndex) {
+                        // BLOQUEO ESTRICTO: Imposible pisar números futuros fuera de orden
+                        updateOso();
+                        playSound('dizzy');
+                        showToast(`⚠️ ¡Imposible pasar por el [ ${sequencePoints[ptIndex].num} ]! Debes conectar el punto [ ${sequencePoints[currentTargetIndex].num} ] primero.`, 2200);
+                        return;
+                    }
+                }
+            }
+
+            // Movimiento normal
+            currentPos = { x: nx, y: ny };
+            pathHistory.push({ x: nx, y: ny, dir: currentDir });
+
+            playSound('step');
+            animateWaddle();
+            updateOso();
+            updatePathRibbon();
+
+            // Modo explorador meta normal
+            if (currentMode !== 'sequences' && currentPos.x === goalPos.x && currentPos.y === goalPos.y) {
+                triggerVictory();
+            }
+        }
+
+        // --- BOTÓN DESHACER (UNDO) ---
+        function undoStep() {
+            if (isExecuting || oso.classList.contains('dancing') || pathHistory.length <= 1) return;
+
+            playSound('step');
+            const removed = pathHistory.pop();
+            const prev = pathHistory[pathHistory.length - 1];
+
+            currentPos = { x: prev.x, y: prev.y };
+            currentDir = prev.dir;
+
+            // Si retrocedimos desde un punto de secuencia alcanzado, decrementar objetivo
+            if (currentMode === 'sequences') {
+                const ptIndex = sequencePoints.findIndex(p => p.x === removed.x && p.y === removed.y);
+                if (ptIndex !== -1 && ptIndex === currentTargetIndex - 1) {
+                    currentTargetIndex = Math.max(1, currentTargetIndex - 1);
+                    renderSequenceHUD();
+                    updateNumberNodeStyles();
+                }
+            }
+
+            updateOso();
+            updatePathRibbon();
+        }
+
+        // --- BOTÓN DE PISTA (HINT 100% PRECISO BASADO EN LA SOLUCIÓN GENERADA) ---
+        function getHint() {
+            if (isExecuting || oso.classList.contains('dancing')) return;
+
+            let nextStep = null;
+
+            // 1. Si estamos en Modo Secuencias y seguimos el camino solución garantizado
+            if (currentMode === 'sequences' && fullSolutionPath.length > 0) {
+                const currentIdxInSol = fullSolutionPath.findIndex(p => p.x === currentPos.x && p.y === currentPos.y);
+                if (currentIdxInSol !== -1 && currentIdxInSol < fullSolutionPath.length - 1) {
+                    nextStep = fullSolutionPath[currentIdxInSol + 1];
+                }
+            }
+
+            // 2. Fallback de búsqueda BFS hacia el próximo objetivo
+            if (!nextStep) {
+                let target = (currentMode === 'sequences')
+                    ? sequencePoints[currentTargetIndex]
+                    : goalPos;
+
+                if (!target) return;
+
+                let queue = [{ x: currentPos.x, y: currentPos.y, path: [] }];
+                let visited = new Set();
+                pathHistory.forEach(p => visited.add(`${p.x},${p.y}`));
+                visited.delete(`${currentPos.x},${currentPos.y}`);
+
+                while (queue.length > 0) {
+                    let cur = queue.shift();
+                    if (cur.x === target.x && cur.y === target.y) {
+                        nextStep = cur.path[0];
+                        break;
+                    }
+
+                    const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    for (let [dx, dy] of neighbors) {
+                        let nx = cur.x + dx, ny = cur.y + dy;
+                        if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize && map[ny][nx] !== 1 && !visited.has(`${nx},${ny}`)) {
+                            visited.add(`${nx},${ny}`);
+                            queue.push({ x: nx, y: ny, path: [...cur.path, { x: nx, y: ny }] });
+                        }
+                    }
+                }
+            }
+
+            if (nextStep) {
+                playSound('hint');
+                const cell = document.getElementById(`cell-${nextStep.x}-${nextStep.y}`);
+                if (cell) {
+                    cell.classList.add('hint-highlight');
+                    showToast(`💡 ¡Pista! Avanza hacia la casilla resaltada.`, 2200);
+                    setTimeout(() => cell.classList.remove('hint-highlight'), 1800);
+                }
+            } else {
+                showToast(`💡 ¡Usa Deshacer (↩) para liberar el camino!`, 2800);
+            }
+        }
+
+        // --- CONTROL POR TECLADO (FLECHAS Y WASD) ---
+        window.addEventListener('keydown', (e) => {
+            if (isExecuting || oso.classList.contains('dancing')) return;
+
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    e.preventDefault();
+                    handleMoveDirection(0, -1, 0);
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    e.preventDefault();
+                    handleMoveDirection(0, 1, 180);
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    e.preventDefault();
+                    handleMoveDirection(-1, 0, 270);
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    e.preventDefault();
+                    handleMoveDirection(1, 0, 90);
+                    break;
+                case 'z':
+                case 'Z':
+                case 'Backspace':
+                    e.preventDefault();
+                    undoStep();
+                    break;
+                case 'h':
+                case 'H':
+                    e.preventDefault();
+                    getHint();
+                    break;
+            }
+        });
+
+        function toggleHowToPlay() {
+            const grid = document.getElementById('how-grid');
+            const chevron = document.getElementById('how-chevron');
+            if (grid.style.display === 'none') {
+                grid.style.display = 'grid';
+                chevron.innerText = '▼';
+            } else {
+                grid.style.display = 'none';
+                chevron.innerText = '▶';
+            }
+        }
+
+        // --- CELEBRACIÓN Y VICTORIA ---
+        function triggerVictory() {
+            const oso = document.getElementById('oso');
+            clearDizzyState();
+            oso.classList.add('dancing');
+
+            playSound('victory');
+            startConfetti();
+
+            const level = parseInt(levelSelect.value);
+            saveStars(level, 3);
+
+            document.getElementById('victory-stars-display').innerText = '⭐⭐⭐';
+            document.getElementById('used-steps-count').innerText = `${pathHistory.length} casillas conectadas`;
+            document.getElementById('best-steps-count').innerText = currentMode === 'sequences'
+                ? `${sequencePoints.length} puntos en orden perfecto`
+                : `Laberinto completado`;
+
+            document.getElementById('victory-msg').innerText = "¡Increíble! Has conectado todos los números trazando una ruta continua perfecta 🚀";
+
+            setTimeout(() => {
+                document.getElementById('win-modal').style.display = 'flex';
+            }, 1400);
+        }
+
+        function stopVictoryEffects() {
+            const oso = document.getElementById('oso');
+            oso.classList.remove('dancing');
+            clearDizzyState();
+            stopConfetti();
+            document.getElementById('win-modal').style.display = 'none';
+        }
+
+        function levelUp() {
+            let nextLvl = parseInt(levelSelect.value) + 1;
+            if (nextLvl <= 20) {
+                levelSelect.value = nextLvl;
+                startNewGame();
+            } else {
+                alert("🎉 ¡FELICITACIONES! Has completado todos los 20 desafíos.");
+                location.reload();
+            }
+        }
+
+        // --- CONFETI NEÓN ---
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const neonColors = ['#00f2ff', '#ff2a8d', '#39ff74', '#ffe600', '#22c55e'];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createParticle() {
+            return {
+                x: Math.random() * canvas.width,
+                y: Math.random() * -canvas.height * 0.5,
+                size: Math.random() * 6 + 3,
+                color: neonColors[Math.floor(Math.random() * neonColors.length)],
+                speedY: Math.random() * 3.5 + 2,
+                speedX: Math.random() * 2 - 1,
+                angle: Math.random() * 360,
+                spin: Math.random() * 6 - 3
+            };
+        }
+
+        function updateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, i) => {
+                p.y += p.speedY;
+                p.x += p.speedX;
+                p.angle += p.spin;
+
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = p.color;
+                ctx.fillStyle = p.color;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.angle * Math.PI / 180);
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.8);
+                ctx.restore();
+
+                if (p.y > canvas.height) particles[i] = createParticle();
+            });
+            confettiInterval = requestAnimationFrame(updateConfetti);
+        }
+
+        function startConfetti() {
+            canvas.style.display = 'block';
+            resizeCanvas();
+            particles = [];
+            for (let i = 0; i < 90; i++) particles.push(createParticle());
+            updateConfetti();
+        }
+
+        function stopConfetti() {
+            canvas.style.display = 'none';
+            if (confettiInterval) cancelAnimationFrame(confettiInterval);
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            updatePathRibbon();
+            updateOso();
+        });
+
+        // Iniciar juego
+        startNewGame();
+    </script>
+</body>
+
+</html>

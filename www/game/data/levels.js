@@ -9,7 +9,7 @@ const LEVELS = (function generateLevels() {
     const baseDifficulty = {
         NumberMaze: { gridSize: 4, timeLimit: 120 },
         MathShooter: { minOperand: 1, maxOperand: 5, timeLimit: 90, distractors: 2 },
-        ObjectSearch: { itemsToFind: 3, timeLimit: 120 },
+        ObjectSearch: { itemsToFind: 5, timeLimit: 120 },
         Coordination: { speedMs: 1000, sequenceLength: 6 }
     };
 
@@ -21,7 +21,7 @@ const LEVELS = (function generateLevels() {
             mathMin: Math.max(1, base.MathShooter.minOperand + Math.floor(factor * 10)),
             mathMax: Math.max(5, base.MathShooter.maxOperand + Math.floor(factor * 20)),
             distractors: Math.min(6, base.MathShooter.distractors + Math.floor(factor * 4)),
-            itemsToFind: Math.min(10, base.ObjectSearch.itemsToFind + Math.floor(factor * 7)),
+            itemsToFind: Math.min(6, base.ObjectSearch.itemsToFind + Math.floor(factor * 2)),
             coordSpeed: Math.max(400, base.Coordination.speedMs - Math.floor(factor * 600))
         };
     }

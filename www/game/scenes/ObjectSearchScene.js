@@ -2,20 +2,42 @@
    OBJECT SEARCH SCENE — Find hidden objects
    ============================================ */
 
+// Pools of emoji icons (keep target/decoy pools disjoint)
+const OBJECT_SEARCH_TARGET_POOL = [
+    '🪙', '💎', '⭐', '🍬', '🧪', '🎈', '⚽', '📚', '🍎', '🌵',
+    '🎸', '🧢', '🔮', '🕰️', '📦', '🌻', '🐚', '🍕', '⚙️', '✈️',
+];
+const OBJECT_SEARCH_KEY_POOL = ['🔑', '🗺️', '🔍', '🗝️', '🎯'];
+const OBJECT_SEARCH_DECOY_POOL = [
+    '🍌', '🥑', '🍩', '🧸', '✏️', '🖍️', '♟️', '🖱️', '⌚', '📷',
+    '🎧', '🏓', '🍇', '🍊', '🧀', '🥨', '🍪', '🧁', '🥕', '🌽',
+    '🥦', '🦋', '🐟', '🪴', '🧵', '🪀', '🥄', '🧃',
+];
+
+function _shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
 class ObjectSearchScene {
     constructor(game) {
         this.game = game;
         this.config = {};
         this.objects = [];
+        this.decoys = [];
         this.foundObjects = [];
         this.score = 0;
+        this.errors = 0;
         this.startTime = 0;
         this.timeLimit = 90;
         this.completed = false;
         this.animTimer = 0;
         this.showVaultChoice = false;
         this.pendingItem = null;
-        this.requiredKeys = 2;
+        this.requiredKeys = 1;
         this.foundKeys = 0;
         this.sparkles = [];
     }
@@ -25,7 +47,9 @@ class ObjectSearchScene {
         this.animTimer = 0;
         this.completed = false;
         this.foundObjects = [];
+        this.decoys = [];
         this.score = 0;
+        this.errors = 0;
         this.foundKeys = 0;
         this.showVaultChoice = false;
         this.pendingItem = null;
@@ -35,27 +59,56 @@ class ObjectSearchScene {
         const ddaParams = ddaSystem.getAdjustedParams(config.dda || {});
         this.timeLimit = ddaParams.timeLimit || 90;
 
-        // Resolve puzzle
-        const puzzleKey = config.puzzleKey || 'objectSearch.level3';
-        const parts = puzzleKey.split('.');
-        let puzzle = PUZZLES;
-        for (const p of parts) puzzle = puzzle?.[p];
+        // Objetivos: solo 5 o 6 (el DDA decide entre ambos)
+        const targetCount = Math.min(6, Math.max(5, ddaParams.itemsToFind || 5));
+        this.requiredKeys = 1;
 
-        if (!puzzle) {
-            this.game.nextLevel();
-            return;
+        // Elegir íconos objetivo distintos al azar
+        const pool = _shuffleArray([...OBJECT_SEARCH_TARGET_POOL]);
+        const icons = pool.slice(0, targetCount);
+
+        // Solo UNO es "especial" (se guarda en la bóveda)
+        const specialIndex = Math.floor(Math.random() * targetCount);
+        const specialIcons = _shuffleArray([...OBJECT_SEARCH_KEY_POOL]);
+
+        this.objects = icons.map((icon, i) => {
+            const isSpecial = i === specialIndex;
+            const pos = this._pickSpot();
+            return {
+                id: `target_${i}`,
+                name: isSpecial ? this._specialName(icon) : this._decoName(icon),
+                icon: isSpecial ? specialIcons[0] : icon,
+                x: pos.x,
+                y: pos.y,
+                screenX: pos.x * this.game.width,
+                screenY: pos.y * this.game.height,
+                isKey: isSpecial,
+                futureUse: isSpecial ? this._specialFutureUse(specialIcons[0]) : null,
+                points: isSpecial ? 0 : (13 + Math.floor(Math.random() * 13)),
+                found: false,
+                pulsePhase: Math.random() * Math.PI * 2,
+            };
+        });
+
+        // Llenar la pantalla con objetos "señuelo" que NO hay que buscar
+        const decoyCount = Math.min(30, 16 + targetCount * 2);
+        const decoyPool = _shuffleArray([...OBJECT_SEARCH_DECOY_POOL]);
+        for (let i = 0; i < decoyCount; i++) {
+            const pos = this._pickSpot();
+            this.decoys.push({
+                id: `decoy_${i}`,
+                icon: decoyPool[i % decoyPool.length],
+                x: pos.x,
+                y: pos.y,
+                screenX: pos.x * this.game.width,
+                screenY: pos.y * this.game.height,
+                hitAnim: 0,
+                scale: 0.7 + Math.random() * 0.5,
+                alpha: 0.55 + Math.random() * 0.3,
+            });
         }
 
-        this.requiredKeys = puzzle.requiredKeys || 2;
-        this.objects = puzzle.objects.map(obj => ({
-            ...obj,
-            found: false,
-            screenX: obj.x * this.game.width,
-            screenY: obj.y * this.game.height,
-            pulsePhase: Math.random() * Math.PI * 2,
-        }));
-
-        // Generate sparkles near objects
+        // Generate sparkles near target objects
         this.objects.forEach(obj => {
             for (let i = 0; i < 3; i++) {
                 this.sparkles.push({
@@ -76,24 +129,61 @@ class ObjectSearchScene {
         }
         audioManager.startMusic('gameplay');
 
+        const sceneName = this.config.title || 'Laboratorio Estelar';
         setTimeout(() => {
             narratorSystem.say([{
                 speaker: 'guia',
-                text: `¡Bienvenido al ${puzzle.sceneName || 'Laboratorio'}! Busca objetos ocultos. Algunos son especiales y deberías guardarlos para después... 🔍`
+                text: `¡Bienvenido al ${sceneName}! La sala está llena de objetos… busca solo ${targetCount}. De ellos, SOLO UNO es especial: guárdalo en la bóveda. 🔍`
             }]);
         }, 500);
+    }
+
+    // --- Random spot (avoid top title band and bottom dock) ---
+    _pickSpot() {
+        return {
+            x: 0.06 + Math.random() * 0.88,
+            y: 0.13 + Math.random() * 0.70,
+        };
+    }
+
+    _specialName(icon) {
+        const names = {
+            '🔑': 'Llave Cristal', '🗺️': 'Mapa Estelar', '🔍': 'Lente Emocional',
+            '🗝️': 'Llave Dorada', '🎯': 'Punto Especial',
+        };
+        return names[icon] || 'Objeto Especial';
+    }
+
+    _specialFutureUse(icon) {
+        const uses = {
+            '🔑': 'Puede abrir puertas secretas en laberintos',
+            '🗺️': 'Revela caminos ocultos en futuras misiones',
+            '🔍': 'Permite ver las emociones de los NPCs en el Acto II',
+            '🗝️': 'Abre el cofre de la paciencia en el Acto III',
+            '🎯': 'Tu puntería emocional será clave en el Acto Final',
+        };
+        return uses[icon] || 'Podría servir después...';
+    }
+
+    _decoName(icon) {
+        const map = {
+            '🪙': 'Moneda Brillante', '💎': 'Gema Pequeña', '⭐': 'Estrella Fugaz',
+            '🍬': 'Dulce Espacial', '🧪': 'Poción Misteriosa', '🎈': 'Globo Galáctico',
+            '⚽': 'Balón Estelar', '📚': 'Libro Antiguo', '🍎': 'Manzana', '🌵': 'Cactus',
+            '🎸': 'Guitarra', '🧢': 'Gorra', '🔮': 'Bola de Cristal', '🕰️': 'Reloj',
+            '📦': 'Caja', '🌻': 'Girasol', '🐚': 'Caracola', '🍕': 'Pizza Espacial',
+            '⚙️': 'Engranaje', '✈️': 'Nave Pequeña',
+        };
+        return map[icon] || 'Objeto';
     }
 
     _updateObjective() {
         const total = this.objects.length;
         const found = this.foundObjects.length;
-        const keyIcons = this.objects
-            .filter(o => o.isKey)
-            .map(o => o.found ? '✅' : o.icon)
-            .join(' ');
-        hud.setObjective(
-            `Busca los objetos ocultos (${found}/${total}) · Claves: ${keyIcons} (${Math.min(this.foundKeys, this.requiredKeys)}/${this.requiredKeys})`
-        );
+        const icons = this.objects.map(o => o.found ? '✅' : o.icon).join(' ');
+        const specialLeft = this.objects.some(o => o.isKey && !o.found);
+        const specialTxt = specialLeft ? ' ¡Guarda el especial!🔒' : '';
+        hud.setObjective(`Encuentra (${found}/${total}): ${icons}${specialTxt}`);
     }
 
     update(dt) {
@@ -107,6 +197,10 @@ class ObjectSearchScene {
             if (obj && !obj.found) {
                 s.phase += dt * 3;
             }
+        });
+        // Decoy shake decay
+        this.decoys.forEach(d => {
+            if (d.hitAnim > 0) d.hitAnim = Math.max(0, d.hitAnim - dt * 2);
         });
     }
 
@@ -134,9 +228,22 @@ class ObjectSearchScene {
         // Counter
         ctx.font = '12px "Quicksand", sans-serif';
         ctx.fillStyle = '#9fa8da';
-        ctx.fillText(`Encontrados: ${this.foundObjects.length}/${this.objects.length} | Claves: ${this.foundKeys}/${this.requiredKeys}`, w / 2, 55);
+        ctx.fillText(`Encontrados: ${this.foundObjects.length}/${this.objects.length} · Especial: ${this.foundKeys}/${this.requiredKeys}`, w / 2, 57);
 
-        // Draw objects (hidden and found)
+        // Draw decoys (distractors — NOT findable)
+        this.decoys.forEach(dec => {
+            const shakeX = dec.hitAnim > 0 ? Math.sin(this.animTimer * 40) * 4 * dec.hitAnim : 0;
+            ctx.save();
+            ctx.globalAlpha = dec.alpha;
+            ctx.font = `${Math.round(24 * dec.scale)}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(dec.icon, dec.screenX + shakeX, dec.screenY);
+            ctx.restore();
+        });
+
+        // Draw target objects (hidden and found) — draw AFTER decoys so
+        // targets (with their pulse/glow) stand out clearly
         this.objects.forEach(obj => {
             if (obj.found) {
                 // Already found - dimmed
@@ -204,7 +311,7 @@ class ObjectSearchScene {
         ctx.font = 'bold 14px "Quicksand", sans-serif';
         ctx.fillStyle = '#ffc107';
         ctx.textAlign = 'right';
-        ctx.fillText(`⭐ ${this.score}`, w - 15, h - 15);
+        ctx.fillText(`⭐ ${this.score}`, w - 15, h - 105);
     }
 
     _drawLabBackground(ctx, w, h) {
@@ -321,11 +428,10 @@ class ObjectSearchScene {
 
     handleInput(type, x, y) {
         if (this.completed) return;
-        if (narratorSystem.isBusy()) return;
-
         if (type !== 'click' && type !== 'touchend') return;
 
-        // Handle vault choice
+        // Handle vault choice BEFORE the narrator busy-check so the
+        // Guardar/Usar buttons work even while the guide dialog is visible.
         if (this.showVaultChoice && this._vaultChoiceBtns) {
             const store = this._vaultChoiceBtns.store;
             const use = this._vaultChoiceBtns.use;
@@ -333,9 +439,10 @@ class ObjectSearchScene {
             if (x >= store.x && x <= store.x + store.w && y >= store.y && y <= store.y + store.h) {
                 audioManager.playVaultStore();
                 vaultSystem.store(this.pendingItem);
-                narratorSystem.sayVault('itemStored');
                 this.showVaultChoice = false;
                 this.pendingItem = null;
+                narratorSystem.sayVault('itemStored');
+                narratorSystem.advance();
                 this._checkComplete();
                 return;
             }
@@ -350,10 +457,26 @@ class ObjectSearchScene {
                 }
                 this.showVaultChoice = false;
                 this.pendingItem = null;
+                narratorSystem.advance();
                 this._checkComplete();
                 return;
             }
             return;
+        }
+
+        if (narratorSystem.isBusy()) return;
+
+        // Check decoys first → wrong tap feedback
+        for (const dec of this.decoys) {
+            const dx = x - dec.screenX;
+            const dy = y - dec.screenY;
+            if (dx * dx + dy * dy < 34 * 34) {
+                dec.hitAnim = 1;
+                this.errors++;
+                audioManager.playWrong();
+                ddaSystem.recordAttempt(false, 0, { type: 'search_wrong_tap' });
+                return;
+            }
         }
 
         // Check object taps
@@ -361,7 +484,7 @@ class ObjectSearchScene {
             if (obj.found) continue;
             const dx = x - obj.screenX;
             const dy = y - obj.screenY;
-            if (dx * dx + dy * dy < 35 * 35) {
+            if (dx * dx + dy * dy < 38 * 38) {
                 this._foundObject(obj);
                 return;
             }

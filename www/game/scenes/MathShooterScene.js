@@ -78,7 +78,7 @@ class MathShooterScene {
 
         // Ship position
         this.shipX = this.game.width / 2;
-        this.shipY = this.game.height - 70;
+        this.shipY = this.game.height - 120;
 
         this.startTime = Date.now();
         hud.show();

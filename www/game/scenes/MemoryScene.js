@@ -168,7 +168,7 @@ class MemoryScene {
         }
 
         // Draw progress dots
-        const dotY = this.game.height - 80;
+        const dotY = this.game.height - 115;
         const startX = w / 2 - ((this.sequenceLength - 1) * 15);
         for (let i = 0; i < this.sequenceLength; i++) {
             ctx.beginPath();

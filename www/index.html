@@ -41,22 +41,26 @@
         <div id="ui-overlay">
             <!-- HUD -->
             <div id="hud" class="hidden">
-                <div id="objective" class="hidden"></div>
-                <div id="hud-top">
-                    <div id="emotion-bars-container"></div>
-                    <div id="hud-actions">
-                        <button id="btn-vault" class="hud-btn" title="Bóveda">🔒</button>
-                        <button id="btn-pause" class="hud-btn" title="Pausa">⏸️</button>
-                        <button id="btn-home" class="hud-btn" title="Inicio">🏠</button>
-                    </div>
-                </div>
-                <div id="hud-timer" class="hidden">
-                    <div class="timer-ring">
-                        <svg viewBox="0 0 36 36">
-                            <path class="timer-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                            <path class="timer-fill" id="timer-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                        </svg>
-                        <span id="timer-text">60</span>
+                <div id="hud-bottom">
+                    <div id="objective" class="hidden"></div>
+                    <div id="hud-main-row">
+                        <div id="emotion-bars-container"></div>
+                        <div id="hud-right">
+                            <div id="hud-timer" class="hidden">
+                                <div class="timer-ring">
+                                    <svg viewBox="0 0 36 36">
+                                        <path class="timer-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                        <path class="timer-fill" id="timer-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                    </svg>
+                                    <span id="timer-text">60</span>
+                                </div>
+                            </div>
+                            <div id="hud-actions">
+                                <button id="btn-vault" class="hud-btn" title="Bóveda">🔒</button>
+                                <button id="btn-pause" class="hud-btn" title="Pausa">⏸️</button>
+                                <button id="btn-home" class="hud-btn" title="Inicio">🏠</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -104,6 +108,15 @@
                     <button class="menu-btn primary" id="btn-next-level">Siguiente ▶️</button>
                 </div>
             </div>
+            
+            <!-- Tardígrado Explorer Overlay -->
+            <div id="tardigrade-overlay" class="hidden">
+                <div class="tardigrade-bar">
+                    <span class="tardigrade-title">🪸 Tardígrado Explorer</span>
+                    <button id="btn-close-tardigrade" class="close-btn">✕ Volver</button>
+                </div>
+                <iframe id="tardigrade-frame" src="tardigrade/index.html" title="Tardígrado Explorer"></iframe>
+            </div>
         </div>
     </div>
 
@@ -132,6 +145,7 @@
     <script src="game/scenes/MemoryScene.js"></script>
     <script src="game/scenes/BreathingScene.js"></script>
     <script src="game/scenes/RecapScene.js"></script>
+    <script src="game/scenes/TardigradeScene.js"></script>
     <script src="game/engine.js"></script>
 </body>
 </html>
