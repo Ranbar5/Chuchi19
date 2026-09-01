@@ -12,6 +12,8 @@ class Game {
         this.paused = false;
         this.currentScene = null;
         this.currentSceneName = '';
+        this.currentLevel = 0;
+        this.saveData = null;
         this.lastTime = 0;
         this.running = false;
 
@@ -230,12 +232,12 @@ class Game {
 
     nextLevel() {
         narratorSystem.clear();
-        this.currentLevel++;
-        
+        this.currentLevel = (this.currentLevel || 0) + 1;
+
         if (!this.saveData) this.saveData = { highestLevel: 0 };
-        this.saveData.highestLevel = Math.max(this.saveData.highestLevel, this.currentLevel);
+        this.saveData.highestLevel = Math.max(this.saveData.highestLevel || 0, this.currentLevel);
         this.saveProgress();
-        
+
         this.changeScene('MapScene');
     }
 

@@ -293,6 +293,7 @@ class MenuScene {
                         emotionTracker.reset();
                         vaultSystem.reset();
                         ddaSystem.setMode('challenge');
+                        this.game.currentLevel = 0;
                         this.game.changeScene('IntroScene');
                         break;
                     case 'reflection':
@@ -300,6 +301,7 @@ class MenuScene {
                         emotionTracker.reset();
                         vaultSystem.reset();
                         ddaSystem.setMode('reflection');
+                        this.game.currentLevel = 0;
                         this.game.changeScene('IntroScene');
                         break;
                 }
