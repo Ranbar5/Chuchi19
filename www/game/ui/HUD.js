@@ -10,6 +10,8 @@ class HUD {
         this.timerFill = document.getElementById('timer-fill');
         this.btnVault = document.getElementById('btn-vault');
         this.btnPause = document.getElementById('btn-pause');
+        this.btnHome = document.getElementById('btn-home');
+        this.emotionBars = document.getElementById('emotion-bars-container');
         this.pauseMenu = document.getElementById('pause-menu');
         this.levelComplete = document.getElementById('level-complete');
         this.vaultPanel = document.getElementById('vault-panel');
@@ -33,6 +35,12 @@ class HUD {
         this.btnPause?.addEventListener('click', () => {
             audioManager.playClick();
             this.togglePause();
+        });
+
+        // Home button (goes straight to main menu)
+        this.btnHome?.addEventListener('click', () => {
+            audioManager.playClick();
+            if (window.game) game.goToMenu();
         });
 
         // Resume
@@ -72,6 +80,11 @@ class HUD {
     // --- Show/Hide ---
     show() { this.hud?.classList.remove('hidden'); }
     hide() { this.hud?.classList.add('hidden'); }
+
+    // --- Emotion bars position ---
+    setEmotionBarsBottom(bottom) {
+        this.emotionBars?.classList.toggle('bottom', bottom);
+    }
 
     // --- Timer ---
     startTimer(durationSec, onTimeout) {

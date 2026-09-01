@@ -239,9 +239,30 @@ html, body {
     max-width: 200px;
 }
 
+/* Shooter: emotion bars docked at the bottom so the ship flies over them */
+#emotion-bars-container.bottom {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    max-width: calc(100% - var(--space-md) * 2);
+    gap: var(--space-sm);
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    background: rgba(10, 14, 39, 0.72);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 229, 255, 0.25);
+}
+
+#emotion-bars-container.bottom .emotion-bar {
+    width: 120px;
+}
+
 #hud-actions {
     display: flex;
     gap: var(--space-sm);
+    margin-left: auto;
 }
 
 .hud-btn {

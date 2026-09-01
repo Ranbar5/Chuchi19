@@ -32,6 +32,9 @@ class MathShooterScene {
         this.pointerX = 0;
         this.pointerY = 0;
         this.muzzleFlash = 0;
+        this.aimMissCount = 0;
+        this.banner = null;
+        this._breathePauseActive = false;
     }
 
     enter(config = {}) {
@@ -47,6 +50,9 @@ class MathShooterScene {
         this.projectiles = [];
         this.particles = [];
         this.pointerActive = false;
+        this.banner = null;
+        this.aimMissCount = 0;
+        this._breathePauseActive = false;
 
         // DDA
         const ddaParams = ddaSystem.getAdjustedParams(config.dda || {});
@@ -76,6 +82,7 @@ class MathShooterScene {
 
         this.startTime = Date.now();
         hud.show();
+        hud.setEmotionBarsBottom(true);
         audioManager.startMusic('gameplay');
 
         // Tutorial
@@ -100,7 +107,18 @@ class MathShooterScene {
         }
 
         this.currentRound++;
+        this.projectiles = [];
+        this._buildProblem();
+        this._spawnTargets();
+    }
 
+    // Repeat the same exercise (same problem) after a target reaches the floor
+    _retryRound() {
+        this.projectiles = [];
+        this._spawnTargets();
+    }
+
+    _buildProblem() {
         // Generar problema procedimental
         const minO = this.config.dda?.minOperand || 1;
         const maxO = this.config.dda?.maxOperand || 5;
@@ -121,6 +139,11 @@ class MathShooterScene {
             text: `${operator === '-' ? Math.max(a, b) : a} ${operator} ${operator === '-' ? Math.min(a, b) : b}`,
             answer: ans
         };
+    }
+
+    _spawnTargets() {
+        const ans = this.currentProblem.answer;
+        const numDistractors = this.config.dda?.distractors || 2;
 
         // Create targets
         this.targets = [];
@@ -187,6 +210,11 @@ class MathShooterScene {
     }
 
     update(dt) {
+        if (this.banner) {
+            this.banner.life -= dt;
+            if (this.banner.life <= 0) this.banner = null;
+        }
+
         if (this.state !== 'playing') return;
         this.animTimer += dt;
         this.muzzleFlash = Math.max(0, this.muzzleFlash - dt * 6);
@@ -239,7 +267,11 @@ class MathShooterScene {
                 }
             }
 
-            return p.life > 0 && p.y > -30 && p.x > -30 && p.x < this.game.width + 30;
+            const onScreen = p.life > 0 && p.y > -30 && p.x > -30 && p.x < this.game.width + 30;
+            if (!onScreen) {
+                this._onAimMiss();
+            }
+            return onScreen;
         });
 
         // Update particles
@@ -307,6 +339,33 @@ class MathShooterScene {
                 ctx.shadowBlur = 0;
             }
 
+            ctx.restore();
+        }
+
+        // Banner message (encouragement / breathing cue)
+        if (this.banner) {
+            const t = this.banner;
+            const fadeIn = Math.min(1, (t.ttl - t.life) / 0.2);
+            const fadeOut = Math.min(1, t.life / 0.3);
+            const alpha = Math.min(fadeIn, fadeOut);
+
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, alpha);
+            ctx.textAlign = 'center';
+
+            const by = 135;
+            ctx.font = 'bold 22px "Fredoka One", cursive';
+            ctx.shadowColor = t.color;
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = t.color;
+            ctx.fillText(t.text, w / 2, by);
+
+            if (t.subtext) {
+                ctx.font = '14px "Quicksand", sans-serif';
+                ctx.fillStyle = '#e8eaf6';
+                ctx.shadowBlur = 0;
+                ctx.fillText(t.subtext, w / 2, by + 26);
+            }
             ctx.restore();
         }
 
@@ -616,44 +675,102 @@ class MathShooterScene {
             this.score += 10 * (1 + this.comboCount);
             this.comboCount++;
             this.consecutiveErrors = 0;
+            this.aimMissCount = 0;
             ddaSystem.recordAttempt(true, 0, { type: 'shooter_correct' });
+
+            const celebrations = ['¡Excelente! 🎉', '¡Muy bien! ⭐', '¡Imparable! 🚀', '¡Súper! 👏', '¡Lo lograste! 🎯'];
+            this._showBanner(celebrations[Math.floor(Math.random() * celebrations.length)], 'Sigue así', '#2ed573', 1.6);
 
             // Clear remaining targets and next round
             this.targets.forEach(t => { if (t.alive) t.alive = false; });
+            this.projectiles = [];
             setTimeout(() => this._nextRound(), 800);
         } else {
             audioManager.playWrong();
             this.errors++;
             this.consecutiveErrors++;
             this.comboCount = 0;
+            this.aimMissCount = 0;
             ddaSystem.recordAttempt(false, 0, { type: 'shooter_wrong' });
 
-            // Frustration check
+            // Frustration check: breathe and pause for a moment
             if (this.consecutiveErrors >= this.frustrationThreshold) {
-                this.state = 'breathing';
-                narratorSystem.sayFrustration('severe');
-                setTimeout(() => {
-                    this.game.insertBreathing('boxBreathing', () => {
-                        this.state = 'playing';
-                        this.consecutiveErrors = 0;
-                        ddaSystem.resetFrustration();
-                    });
-                }, 3000);
+                this._showBanner('Respira…', 'Inhala profundo y exhala 🌬️', '#ffd166', 1.4);
+                this._breathePause(1, () => {
+                    this.state = 'breathing';
+                    narratorSystem.sayFrustration('severe');
+                    setTimeout(() => {
+                        this.game.insertBreathing('boxBreathing', () => {
+                            this.state = 'playing';
+                            this.consecutiveErrors = 0;
+                            ddaSystem.resetFrustration();
+                        });
+                    }, 3000);
+                });
             } else if (this.consecutiveErrors >= 2) {
+                this._showBanner('Ánimo…', 'Respira hondo y vuelve a intentarlo 🌬️', '#ffd166', 1.4);
+                this._breathePause(1, () => {
+                    this.consecutiveErrors = 0;
+                    ddaSystem.resetFrustration();
+                });
                 narratorSystem.sayFrustration('mild');
             }
         }
     }
 
     _onMiss() {
-        // Target reached bottom without being shot
+        // Target reached bottom without being shot — encourage and repeat the exercise
         this.errors++;
         this.consecutiveErrors++;
         this.comboCount = 0;
+        this.aimMissCount = 0;
         ddaSystem.recordAttempt(false, 0, { type: 'shooter_miss' });
         audioManager.playWrong();
-        this.targets.forEach(t => t.alive = false);
-        setTimeout(() => this._nextRound(), 500);
+
+        const encouragements = ['¡Tú puedes! 💪', '¡No te rindas!', '¡Un intento más! 🌈', '¡Vamos, otra vez! ✨', '¡Confía en ti! 🌟'];
+        this._showBanner(
+            encouragements[Math.floor(Math.random() * encouragements.length)],
+            'Respira y vuelve a intentar el mismo ejercicio',
+            '#7dd3fc',
+            2
+        );
+
+        this._breathePause(1, () => {
+            this.consecutiveErrors = 0;
+            if (this.currentProblem) {
+                this._retryRound();
+            } else {
+                this._nextRound();
+            }
+        });
+    }
+
+    _onAimMiss() {
+        // A shot that hit nothing — calm the player and ease the targets
+        this.aimMissCount++;
+        if (this.aimMissCount >= 2) {
+            this.aimMissCount = 0;
+            const factor = 0.8;
+            this.targetSpeed = Math.max(0.6, this.targetSpeed * factor);
+            this.targets.forEach(t => { if (t.alive) t.speed *= factor; });
+            this._showBanner('¡Con calma!', 'Los blancos irán un poco más despacio 🌬️', '#7dd3fc', 2.2);
+            audioManager.playBreathIn();
+        }
+    }
+
+    _breathePause(seconds, after) {
+        if (this._breathePauseActive) return;
+        this._breathePauseActive = true;
+        this.state = 'breathing';
+        setTimeout(() => {
+            this.state = 'playing';
+            this._breathePauseActive = false;
+            if (after) after();
+        }, seconds * 1000);
+    }
+
+    _showBanner(text, subtext, color, ttl) {
+        this.banner = { text, subtext: subtext || '', color: color || '#0ff', life: ttl || 2, ttl: ttl || 2 };
     }
 
     _onComplete() {
@@ -707,5 +824,6 @@ class MathShooterScene {
     exit() {
         narratorSystem.clear();
         audioManager.stopMusic();
+        hud.setEmotionBarsBottom(false);
     }
 }
