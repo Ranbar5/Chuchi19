@@ -27,6 +27,7 @@ const LEVELS = (function generateLevels() {
     }
 
     const totalLevels = 500;
+    let playIndex = 0;
 
     for (let i = 1; i <= totalLevels; i++) {
         const dda = scaleDDA(i, baseDifficulty);
@@ -47,21 +48,24 @@ const LEVELS = (function generateLevels() {
             sceneType = 'BreathingScene';
             title = 'Pausa Consciente';
         } else {
-            // Repartir en 5 actividades en lugar de 4
-            const gameMod = i % 5;
-            if (gameMod === 1) {
+            // Repartir en 5 actividades (el contador global hace que cada
+            // actividad aparezca siempre; el %5 fijo chocaba con StoryScene)
+            const activity = playIndex % 5;
+            playIndex++;
+
+            if (activity === 0) {
                 sceneType = 'NumberMazeScene';
                 title = `Laberinto Nivel ${i}`;
                 config = { dda: { gridSize: dda.gridSize } };
-            } else if (gameMod === 2) {
+            } else if (activity === 1) {
                 sceneType = 'MathShooterScene';
                 title = `Defensa Espacial Nivel ${i}`;
                 config = { dda: { minOperand: dda.mathMin, maxOperand: dda.mathMax, distractors: dda.distractors } };
-            } else if (gameMod === 3) {
+            } else if (activity === 2) {
                 sceneType = 'ObjectSearchScene';
                 title = `Búsqueda Nivel ${i}`;
                 config = { dda: { itemsToFind: dda.itemsToFind } };
-            } else if (gameMod === 4) {
+            } else if (activity === 3) {
                 sceneType = 'CoordinationScene';
                 title = `Coordinación Nivel ${i}`;
                 config = { dda: { speedMs: dda.coordSpeed } };
