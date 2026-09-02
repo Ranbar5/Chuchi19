@@ -1189,6 +1189,90 @@
                 max-width: 460px;
             }
         }
+
+        /* --- MODO EMBEBIDO (dentro de un iframe en otra app) --- */
+        body.embedded {
+            --board-size: min(92vw, min(calc(100vh - 400px), 420px));
+            padding: 2px 10px 4px;
+        }
+        body.embedded header {
+            margin-bottom: 2px;
+        }
+        body.embedded h1 {
+            font-size: 0.9rem;
+        }
+        body.embedded .subtitle {
+            display: none;
+        }
+        body.embedded .brand-icon {
+            font-size: 1.2rem;
+        }
+        body.embedded .sound-btn {
+            padding: 4px 9px;
+            font-size: 0.9rem;
+        }
+        body.embedded .main-container {
+            gap: 6px;
+        }
+        body.embedded .panel-column {
+            gap: 5px;
+        }
+        body.embedded .mode-tabs {
+            padding: 3px;
+            gap: 3px;
+        }
+        body.embedded .mode-tab {
+            padding: 4px 2px;
+            font-size: 0.62rem;
+        }
+        body.embedded .mode-tab-icon {
+            font-size: 0.85rem;
+        }
+        body.embedded .sequence-hud {
+            padding: 5px 8px;
+        }
+        body.embedded .sequence-hud-header {
+            margin-bottom: 3px;
+            font-size: 0.6rem;
+        }
+        body.embedded .seq-dot {
+            width: 22px;
+            height: 22px;
+            font-size: 0.68rem;
+        }
+        body.embedded .config-menu {
+            padding: 6px 8px;
+            gap: 6px;
+        }
+        body.embedded select {
+            padding: 5px 7px;
+            font-size: 0.78rem;
+        }
+        body.embedded .stats-bar {
+            padding: 4px 8px;
+            font-size: 0.68rem;
+        }
+        body.embedded .action-row {
+            gap: 6px;
+        }
+        body.embedded .btn-action {
+            padding: 8px 10px;
+            font-size: 0.72rem;
+        }
+        body.embedded .dpad-container {
+            padding: 6px;
+            gap: 4px;
+        }
+        body.embedded .dpad-grid {
+            grid-template-rows: repeat(2, 38px);
+            gap: 5px;
+        }
+        body.embedded .keyboard-hint {
+            display: none;
+        }
+        body.embedded .how-to-play-card {
+            display: none;
+        }
     </style>
 </head>
 
@@ -1490,6 +1574,11 @@
     </div>
 
     <script>
+        // --- MODO EMBEBIDO: detectar si corre dentro de un iframe ---
+        if (window.self !== window.top) {
+            document.body.classList.add('embedded');
+        }
+
         // --- ESTADO GLOBAL ---
         let currentMode = 'sequences'; // 'sequences' | 'explorer' | 'programmer'
         let gridSize = 6;
